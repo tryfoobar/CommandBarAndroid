@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.commandbar.commandbar"
+    namespace = "com.commandbar"
     compileSdk = 33
 
     defaultConfig {
@@ -44,17 +44,10 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "com.commandbar"
             artifactId = "commandbar"
-            version = "1.0"
+            version = "0.0.3"
 
             afterEvaluate {
                 from(components["release"])
-            }
-        }
-
-        repositories {
-            maven {
-                name = "CommandBarAndroid"
-                url = uri("${project.buildDir}/repo")
             }
         }
     }

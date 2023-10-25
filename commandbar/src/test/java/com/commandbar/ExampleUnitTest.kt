@@ -1,4 +1,4 @@
-package com.commandbar.commandbar
+package com.commandbar
 
 import org.junit.Test
 

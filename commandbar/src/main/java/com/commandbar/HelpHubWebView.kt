@@ -1,11 +1,10 @@
-package com.commandbar.commandbar
+package com.commandbar
 
 import android.content.Context
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 
-// TODO: Pull this out to its own open source package
 class HelpHubWebView(context: Context) : WebView(context) {
     init {
         webChromeClient = WebChromeClient()

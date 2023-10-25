@@ -1,4 +1,4 @@
-package com.commandbar.commandbar
+package com.commandbar
 
 import android.app.Activity
 import android.util.DisplayMetrics
