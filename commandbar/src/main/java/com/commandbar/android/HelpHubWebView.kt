@@ -1,4 +1,4 @@
-package com.commandbar
+package com.commandbar.android
 
 import android.content.Context
 import android.webkit.WebChromeClient

@@ -42,9 +42,9 @@ android {
 publishing {
     publications {
         register<MavenPublication>("release") {
-            groupId = "com.commandbar"
+            groupId = "com.commandbar.android"
             artifactId = "commandbar"
-            version = "0.0.3"
+            version = "0.0.1"
 
             afterEvaluate {
                 from(components["release"])

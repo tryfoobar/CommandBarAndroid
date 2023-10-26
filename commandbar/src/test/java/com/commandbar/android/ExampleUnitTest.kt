@@ -1,4 +1,4 @@
-package com.commandbar
+package com.commandbar.android
 
 import org.junit.Test
 
