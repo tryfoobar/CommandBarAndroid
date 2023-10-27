@@ -1,7 +1,10 @@
+import com.vanniktech.maven.publish.SonatypeHost
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
+    id("com.vanniktech.maven.publish") version "0.25.3"
 }
 
 android {
@@ -32,27 +35,42 @@ android {
         jvmTarget = "1.8"
     }
 
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-        }
-    }
 }
 
-publishing {
-    publications {
-        register<MavenPublication>("release") {
-            groupId = "com.commandbar.android"
-            artifactId = "commandbar"
-            version = "0.0.1"
+mavenPublishing {
+    mavenPublishing {
+        publishToMavenCentral(SonatypeHost.S01)
 
-            afterEvaluate {
-                from(components["release"])
+        signAllPublications()
+
+        coordinates("com.commandbar.android", "commandbar", "0.0.2")
+
+        pom {
+            name.set("CommandBarAndroid")
+            description.set("CommandBarSDK for Android")
+            inceptionYear.set("2023")
+            url.set("https://github.com/tryfoobar/CommandBarAndroid/")
+            licenses {
+                license {
+                    name.set("MIT License")
+                    url.set("https://github.com/tryfoobar/CommandBarAndroid/blob/main/LICENSE")
+                }
+            }
+            developers {
+                developer {
+                    id.set("tryfoobar")
+                    name.set("tryfoobar")
+                    url.set("https://github.com/tryfoobar/")
+                }
+            }
+            scm {
+                url.set("https://github.com/tryfoobar/CommandBarAndroid/")
+                connection.set("scm:git:git://github.com/tryfoobar/CommandBarAndroid.git")
+                developerConnection.set("scm:git:ssh://git@github.com/tryfoobar/CommandBarAndroid.git")
             }
         }
     }
 }
-
 
 dependencies {
 

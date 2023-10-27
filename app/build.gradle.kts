@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.commandbar.mainactivity"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.commandbar.mainactivity"
@@ -63,4 +63,6 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    implementation(project(":commandbar"))
 }
