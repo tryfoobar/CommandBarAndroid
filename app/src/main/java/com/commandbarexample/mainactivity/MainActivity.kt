@@ -1,4 +1,4 @@
-package com.commandbar.mainactivity
+package com.commandbarexample.mainactivity
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ReportFragment.Companion.reportFragment
-import com.commandbar.mainactivity.ui.theme.MainActivityTheme
+import com.commandbarexample.mainactivity.ui.theme.MainActivityTheme
 import com.commandbar.android.CommandBar
 
 class MainActivity : ComponentActivity() {

@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MainActivity"
+rootProject.name = "CommandBarAndroid"
 include(":app")
 include(":commandbar")

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.commandbar.mainactivity"
+    namespace = "com.commandbarexample.mainactivity"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.commandbar.mainactivity"
+        applicationId = "com.commandbarexample.mainactivity"
         minSdk = 24
         targetSdk = 33
         versionCode = 1

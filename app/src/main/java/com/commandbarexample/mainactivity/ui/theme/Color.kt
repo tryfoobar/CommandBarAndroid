@@ -1,4 +1,4 @@
-package com.commandbar.mainactivity.ui.theme
+package com.commandbarexample.mainactivity.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
