@@ -4,17 +4,61 @@ import android.content.Context
 import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
-class HelpHubWebView(context: Context, options: CommandBarOptions? = null) : WebView(context) {
+typealias FallbackActionCallback = ((action: Any) -> Unit)
+
+class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFallbackAction: FallbackActionCallback? = null) : WebView(context) {
     private lateinit var options: CommandBarOptions;
+    private lateinit var onFallbackAction: FallbackActionCallback
 
     init {
-        webChromeClient = WebChromeClient()
+        if (onFallbackAction != null) {
+            this.onFallbackAction = onFallbackAction
+            resetJavascriptInterface(onFallbackAction)
+        }
+
+        if (options != null) {
+            this.options = options
+            setupWebView(options)
+        }
+    }
+
+    fun setOptions(options: CommandBarOptions) {
+        this.options = options
+        setupWebView(options)
+    }
+
+    fun setFallbackActionCallback(callback: FallbackActionCallback) {
+        this.onFallbackAction = callback
+        resetJavascriptInterface(callback)
+    }
+
+    inner class CommandBarJavaScriptInterface(private var callback: FallbackActionCallback? = null) {
+        @JavascriptInterface
+        fun commandbar__onFallbackAction(action: Any) {
+            if (callback != null) {
+                callback?.let { it(action) }
+            }
+        }
+    }
+
+    private fun resetJavascriptInterface(callback: FallbackActionCallback) {
+        try {
+            removeJavascriptInterface("CommandBarAndroidInterface")
+        } catch (e: Exception) {
+            // Do nothing
+        } finally {
+            addJavascriptInterface(CommandBarJavaScriptInterface(callback), "CommandBarAndroidInterface")
+        }
+    }
+
+    private fun setupWebView (options: CommandBarOptions) {
         webChromeClient = WebChromeClient()
 
         // Enable JavaScript in the WebView
@@ -26,15 +70,17 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null) : Web
             ViewGroup.LayoutParams.MATCH_PARENT
         )
 
-        if (options != null) {
-            this.options = options
-            setupWebView(options)
+        webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                val snippet = getSnippet(options)
+                view?.evaluateJavascript(snippet) {
+                    println(it)
+                }
+            }
         }
-    }
 
-    fun setOptions(options: CommandBarOptions) {
-        this.options = options
-        setupWebView(options)
+        val html = getHTML(options)
+        loadDataWithBaseURL("https://api.commandbar.com", html, "text/html", "UTF-8", null)
     }
 
     fun openBottomSheetDialog() {
@@ -61,20 +107,6 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null) : Web
         }
     }
 
-    private fun setupWebView (options: CommandBarOptions) {
-
-        webViewClient = object : WebViewClient() {
-            override fun onPageFinished(view: WebView?, url: String?) {
-                val snippet = getSnippet(options)
-                view?.evaluateJavascript(snippet) {
-                    println(it)
-                }
-            }
-        }
-
-        val html = getHTML(options)
-        loadDataWithBaseURL("https://api.commandbar.com", html, "text/html", "UTF-8", null)
-    }
 
     companion object {
 
