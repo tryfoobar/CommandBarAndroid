@@ -10,7 +10,7 @@ import android.webkit.WebViewClient
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
-class HelpHubWebView(context: Context, options: CommandBarOptions) : WebView(context) {
+class HelpHubWebView(context: Context, options: CommandBarOptions? = null) : WebView(context) {
     private lateinit var options: CommandBarOptions;
 
     init {
