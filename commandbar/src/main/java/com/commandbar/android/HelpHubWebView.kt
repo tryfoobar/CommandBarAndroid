@@ -100,7 +100,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
         }
 
         val html = getHTML(options)
-        loadDataWithBaseURL("https://api-labs.commandbar.com", html, "text/html", "UTF-8", null)
+        loadDataWithBaseURL("https://api.commandbar.com", html, "text/html", "UTF-8", null)
     }
 
     fun openBottomSheetDialog() {
