@@ -10,8 +10,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import org.json.JSONObject
 
-typealias FallbackActionCallback = ((action: Any) -> Unit)
+typealias FallbackActionCallback = ((action: Map<String, Any>) -> Unit)
 
 class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFallbackAction: FallbackActionCallback? = null) : WebView(context) {
     private lateinit var options: CommandBarOptions;
@@ -41,10 +42,29 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
 
     inner class CommandBarJavaScriptInterface(private var callback: FallbackActionCallback? = null) {
         @JavascriptInterface
-        fun commandbar__onFallbackAction(action: Any) {
+        fun commandbar__onFallbackAction(action: String?) {
             if (callback != null) {
-                callback?.let { it(action) }
+                val actionParam = if (action != null) JSONObject(action).toMap() else emptyMap()
+                callback?.let { it(actionParam) }
             }
+        }
+
+        private fun JSONObject.toMap(): Map<String, Any> {
+            val map = mutableMapOf<String, Any>()
+            val keysIterator = keys()
+
+            while (keysIterator.hasNext()) {
+                val key = keysIterator.next()
+                val value = this[key]
+
+                if (value is JSONObject) {
+                    map[key] = value.toMap() // Recursively convert nested JSON objects
+                } else {
+                    map[key] = value
+                }
+            }
+
+            return map
         }
     }
 
@@ -80,7 +100,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
         }
 
         val html = getHTML(options)
-        loadDataWithBaseURL("https://api.commandbar.com", html, "text/html", "UTF-8", null)
+        loadDataWithBaseURL("https://api-labs.commandbar.com", html, "text/html", "UTF-8", null)
     }
 
     fun openBottomSheetDialog() {
@@ -112,14 +132,13 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
 
         @JvmStatic
         private fun getSnippet(options: CommandBarOptions): String {
-            val launchCode = "labs"
             val hostname = "10.0.2.2"
             val apiHost = "api.commandbar.com";
             val userId = if (options.userId == null) "null" else "\"${options.userId}\""
 
             return """
               (function() {
-                  var o="${options.orgId}",n=["Object.assign","Symbol","Symbol.for"].join("%2C"),a=window;function t(o,n){void 0===n&&(n=!1),"complete"!==document.readyState&&window.addEventListener("load",t.bind(null,o,n),{capture:!1,once:!0});var a=document.createElement("script");a.type="text/javascript",a.async=n,a.src=o,document.head.appendChild(a)}function r(){var n;if(void 0===a.CommandBar){delete a.__CommandBarBootstrap__;var r=Symbol.for("CommandBar::configuration"),e=Symbol.for("CommandBar::orgConfig"),c=Symbol.for("CommandBar::disposed"),i=Symbol.for("CommandBar::isProxy"),m=Symbol.for("CommandBar::queue"),l=Symbol.for("CommandBar::unwrap"),d=[],s="$launchCode",u=s&&s.includes("local")?"http://$hostname:8000":"https://$apiHost",f=Object.assign(((n={})[r]={uuid:o},n[e]={},n[c]=!1,n[i]=!0,n[m]=new Array,n[l]=function(){return f},n),a.CommandBar),p=["addCommand","boot"],y=f;Object.assign(f,{shareCallbacks:function(){return{}},shareContext:function(){return{}}}),a.CommandBar=new Proxy(f,{get:function(o,n){return n in y?f[n]:p.includes(n)?function(){var o=Array.prototype.slice.call(arguments);return new Promise((function(a,t){o.unshift(n,a,t),f[m].push(o)}))}:function(){var o=Array.prototype.slice.call(arguments);o.unshift(n),f[m].push(o)}}}),null!==s&&d.push("lc=".concat(s)),d.push("version=2"),t("".concat(u,"/latest/").concat(o,"?").concat(d.join("&")),!0)}}void 0===Object.assign||"undefined"==typeof Symbol||void 0===Symbol.for?(a.__CommandBarBootstrap__=r,t("https://polyfill.io/v3/polyfill.min.js?version=3.101.0&callback=__CommandBarBootstrap__&features="+n)):r();
+                  var o="${options.orgId}",n=["Object.assign","Symbol","Symbol.for"].join("%2C"),a=window;function t(o,n){void 0===n&&(n=!1),"complete"!==document.readyState&&window.addEventListener("load",t.bind(null,o,n),{capture:!1,once:!0});var a=document.createElement("script");a.type="text/javascript",a.async=n,a.src=o,document.head.appendChild(a)}function r(){var n;if(void 0===a.CommandBar){delete a.__CommandBarBootstrap__;var r=Symbol.for("CommandBar::configuration"),e=Symbol.for("CommandBar::orgConfig"),c=Symbol.for("CommandBar::disposed"),i=Symbol.for("CommandBar::isProxy"),m=Symbol.for("CommandBar::queue"),l=Symbol.for("CommandBar::unwrap"),d=[],s="${options.launchCode}",u=s&&s.includes("local")?"http://$hostname:8000":"https://$apiHost",f=Object.assign(((n={})[r]={uuid:o},n[e]={},n[c]=!1,n[i]=!0,n[m]=new Array,n[l]=function(){return f},n),a.CommandBar),p=["addCommand","boot"],y=f;Object.assign(f,{shareCallbacks:function(){return{}},shareContext:function(){return{}}}),a.CommandBar=new Proxy(f,{get:function(o,n){return n in y?f[n]:p.includes(n)?function(){var o=Array.prototype.slice.call(arguments);return new Promise((function(a,t){o.unshift(n,a,t),f[m].push(o)}))}:function(){var o=Array.prototype.slice.call(arguments);o.unshift(n),f[m].push(o)}}}),null!==s&&d.push("lc=".concat(s)),d.push("version=2"),t("".concat(u,"/latest/").concat(o,"?").concat(d.join("&")),!0)}}void 0===Object.assign||"undefined"==typeof Symbol||void 0===Symbol.for?(a.__CommandBarBootstrap__=r,t("https://polyfill.io/v3/polyfill.min.js?version=3.101.0&callback=__CommandBarBootstrap__&features="+n)):r();
                   window.CommandBar.boot($userId, { products: ["help_hub"] });
                   window.CommandBar.openHelpHub();
               })();

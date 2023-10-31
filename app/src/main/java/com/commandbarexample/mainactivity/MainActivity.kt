@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Button(
                         onClick = {
-                            CommandBar.openHelpHub( (this@MainActivity), CommandBarOptions("your_org_id"))
+                            CommandBar.openHelpHub( (this@MainActivity), CommandBarOptions("641ade4d"))
                       },
                         modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center)
                     ) {
