@@ -13,6 +13,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.commandbar.R
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import org.json.JSONObject
 
@@ -85,6 +86,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
 
     private fun setupWebView (options: CommandBarOptions) {
         webChromeClient = WebChromeClient()
+        setBackgroundColor(Color.TRANSPARENT)
 
         // Enable JavaScript in the WebView
         settings.javaScriptEnabled = true
@@ -119,7 +121,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
 
     fun openBottomSheetDialog() {
         // Create the BottomSheetDialog
-        var dialog = BottomSheetDialog(context)
+        var dialog = BottomSheetDialog(context, R.style.HelpHubBottomSheet)
         val coordinatorLayout = CoordinatorLayout(context).apply {
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             addView(this@HelpHubWebView)

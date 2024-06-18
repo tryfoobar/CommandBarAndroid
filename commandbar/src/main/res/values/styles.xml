@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+<style name="BottomSheetModalHandle" parent="Widget.Design.BottomSheet.Modal">
+    <item name="android:background">@drawable/shape_bottom_sheet_with_handle</item>
+    <item name="android:paddingTop">8dp</item>
+    <item name="android:layout_height">match_parent</item>
+</style>
+
+<style name="HelpHubBottomSheet" parent="Theme.Design.Light.BottomSheetDialog">
+    <item name="bottomSheetStyle">@style/BottomSheetModalHandle</item>
+
+    <item name="android:backgroundDimEnabled">true</item>
+    <item name="android:windowIsFloating">true</item>
+    <item name="android:statusBarColor">@android:color/transparent</item>
+    <item name="android:windowSoftInputMode">adjustResize</item>
+    <item name="android:layout_height">match_parent</item>
+</style>
+</resources>

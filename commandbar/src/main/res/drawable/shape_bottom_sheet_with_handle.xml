@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:drawable="@drawable/shape_bottom_sheet_handle_outside"
+        android:gravity="center|top"
+        android:bottom="16dp" />
+
+    <item
+        android:drawable="@drawable/shape_rounded_top_bottom_sheet"
+        android:top="8dp"/>
+</layer-list>
