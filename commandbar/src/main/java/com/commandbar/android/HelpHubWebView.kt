@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -19,6 +18,14 @@ import org.json.JSONObject
 
 
 typealias FallbackActionCallback = ((action: Map<String, Any>) -> Unit)
+
+fun Context.dpToPx(dp: Int): Int {
+    return (dp * resources.displayMetrics.density).toInt()
+}
+
+fun Context.pxToDp(px: Int): Float {
+    return (px.toFloat() / resources.displayMetrics.density)
+}
 
 class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFallbackAction: FallbackActionCallback? = null) : WebView(context) {
     private lateinit var options: CommandBarOptions;
@@ -97,6 +104,8 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
             ViewGroup.LayoutParams.MATCH_PARENT
         )
 
+
+
         webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 val snippet = getSnippet(options)
@@ -131,8 +140,10 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
 
         // Adjust the height of the dialog to match the screen height
         val windowHeight = Resources.getSystem().displayMetrics.heightPixels
-        dialog.behavior.peekHeight = windowHeight
-
+        val sheetHeight = windowHeight - context.dpToPx(40)
+        dialog.behavior.peekHeight = sheetHeight
+        this.layoutParams.height = sheetHeight
+        dialog.behavior.maxHeight = sheetHeight
 
         val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet);
         // Show the dialog using the post method to wait for the view to be fully measured and laid out
