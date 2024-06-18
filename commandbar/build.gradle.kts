@@ -43,7 +43,7 @@ mavenPublishing {
 
         signAllPublications()
 
-        coordinates("com.commandbar.android", "commandbar", "1.0.7")
+        coordinates("com.commandbar.android", "commandbar", "1.0.8")
 
         pom {
             name.set("CommandBarAndroid")

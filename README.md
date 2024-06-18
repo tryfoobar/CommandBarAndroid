@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.commandbar.android:commandbar:1.0.7'
+    implementation 'com.commandbar.android:commandbar:1.0.8'
 }
 ```
 
