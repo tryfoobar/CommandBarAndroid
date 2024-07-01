@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.commandbar.android:commandbar:1.0.8'
+    implementation 'com.commandbar.android:commandbar:1.0.9'
 }
 ```
 
@@ -42,6 +42,7 @@ import com.commandbar.android.HelpHubWebView;
 -   `options` (required): An instance of the `CommandBarOptions` class that holds the options for the `HelpHubWebView``.
     -   `orgId` (required): Your Organization ID from [CommandBar](https://app.commandbar.com)
     -   `spinnerColor` (optional): Optionally specify a color to render the loading Spinner
+-   `articleId` (optional): Optionally specify an article ID to open a specific article in HelpHub
 -   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with
 
 ### `HelpHubWebView`
@@ -52,6 +53,7 @@ import com.commandbar.android.HelpHubWebView;
 -   `options` (optional): An instance of the `CommandBarOptions` class that holds the options for the `HelpHubWebView``.
     -   `orgId` (required): Your Organization ID from [CommandBar](https://app.commandbar.com)
     -   `spinnerColor` (optional): Optionally specify a color to render the loading Spinner
+-   `articleId` (optional): Optionally specify an article ID to open a specific article in HelpHub
 -   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with
 
 ### Run the Example
