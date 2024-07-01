@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -15,6 +16,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.commandbar.R
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import org.json.JSONObject
+import java.lang.Compiler.command
 
 
 typealias FallbackActionCallback = ((action: Map<String, Any>) -> Unit)
@@ -27,11 +29,13 @@ fun Context.pxToDp(px: Int): Float {
     return (px.toFloat() / resources.displayMetrics.density)
 }
 
-class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFallbackAction: FallbackActionCallback? = null) : WebView(context) {
+class HelpHubWebView(context: Context, options: CommandBarOptions? = null, articleId: Int? = null, onFallbackAction: FallbackActionCallback? = null) : WebView(context) {
     private lateinit var options: CommandBarOptions;
     private lateinit var onFallbackAction: FallbackActionCallback
+    private var articleId: Int?
 
     init {
+        this.articleId = articleId
         if (onFallbackAction != null) {
             this.onFallbackAction = onFallbackAction
             resetJavascriptInterface(onFallbackAction)
@@ -39,8 +43,10 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
 
         if (options != null) {
             this.options = options
-            setupWebView(options)
+            setupWebView(options, this.articleId)
         }
+
+
     }
 
     fun setOptions(options: CommandBarOptions) {
@@ -91,7 +97,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
         }
     }
 
-    private fun setupWebView (options: CommandBarOptions) {
+    private fun setupWebView (options: CommandBarOptions, articleId: Int? = null) {
         webChromeClient = WebChromeClient()
         setBackgroundColor(Color.TRANSPARENT)
 
@@ -105,13 +111,18 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
         )
 
 
-
         webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
-                val snippet = getSnippet(options)
-                view?.evaluateJavascript(snippet) {
-                    println(it)
-                }
+                view?.evaluateJavascript(
+                    "(function() { return !!window.CommandBar && !!window.CommandBar.openHelpHub; })();")
+                    {
+                        if (it != "true") {
+                            val snippet = getSnippet(options, articleId)
+                            view?.evaluateJavascript(snippet) {
+                                println(it)
+                            }
+                        }
+                    }
             }
 
             override fun shouldOverrideUrlLoading(
@@ -158,17 +169,20 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, onFal
     companion object {
 
         @JvmStatic
-        private fun getSnippet(options: CommandBarOptions): String {
+        private fun getSnippet(options: CommandBarOptions, articleId: Int? = null): String {
             val hostname = "10.0.2.2"
             val apiHost = "api.commandbar.com";
             val userId = if (options.userId == null) "null" else "\"${options.userId}\""
             val launchCode = if (options.launchCode == null) "prod" else options.launchCode
+
+            val executable = if (articleId == null) "window.CommandBar.openHelpHub()" else "window.CommandBar.openHelpHub({ articleId: $articleId })"
             return """
               (function() {
                   window._cbIsWebView = true;
                   var o="${options.orgId}",n=["Object.assign","Symbol","Symbol.for"].join("%2C"),a=window;function t(o,n){void 0===n&&(n=!1),"complete"!==document.readyState&&window.addEventListener("load",t.bind(null,o,n),{capture:!1,once:!0});var a=document.createElement("script");a.type="text/javascript",a.async=n,a.src=o,document.head.appendChild(a)}function r(){var n;if(void 0===a.CommandBar){delete a.__CommandBarBootstrap__;var r=Symbol.for("CommandBar::configuration"),e=Symbol.for("CommandBar::orgConfig"),c=Symbol.for("CommandBar::disposed"),i=Symbol.for("CommandBar::isProxy"),m=Symbol.for("CommandBar::queue"),l=Symbol.for("CommandBar::unwrap"),d=[],s="api=$launchCode;commandbar=$launchCode",u=s&&s.includes("local")?"http://$hostname:8000":"https://$apiHost",f=Object.assign(((n={})[r]={uuid:o},n[e]={},n[c]=!1,n[i]=!0,n[m]=new Array,n[l]=function(){return f},n),a.CommandBar),p=["addCommand","boot"],y=f;Object.assign(f,{shareCallbacks:function(){return{}},shareContext:function(){return{}}}),a.CommandBar=new Proxy(f,{get:function(o,n){return n in y?f[n]:p.includes(n)?function(){var o=Array.prototype.slice.call(arguments);return new Promise((function(a,t){o.unshift(n,a,t),f[m].push(o)}))}:function(){var o=Array.prototype.slice.call(arguments);o.unshift(n),f[m].push(o)}}}),null!==s&&d.push("lc=".concat(s)),d.push("version=2"),t("".concat(u,"/latest/").concat(o,"?").concat(d.join("&")),!0)}}void 0===Object.assign||"undefined"==typeof Symbol||void 0===Symbol.for?(a.__CommandBarBootstrap__=r,t("https://polyfill.io/v3/polyfill.min.js?version=3.101.0&callback=__CommandBarBootstrap__&features="+n)):r();
                   window.CommandBar.boot($userId, {}, { products: ["help_hub"] });
-                  window.CommandBar.openHelpHub();
+                  console.log("Rerunning executable");
+                  $executable
               })();
           """
         }
