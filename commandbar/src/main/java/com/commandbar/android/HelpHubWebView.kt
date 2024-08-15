@@ -7,16 +7,15 @@ import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
-import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.commandbar.R
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import org.json.JSONObject
-import java.lang.Compiler.command
 
 
 typealias FallbackActionCallback = ((action: Map<String, Any>) -> Unit)
@@ -32,6 +31,7 @@ fun Context.pxToDp(px: Int): Float {
 class HelpHubWebView(context: Context, options: CommandBarOptions? = null, articleId: Int? = null, onFallbackAction: FallbackActionCallback? = null) : WebView(context) {
     private lateinit var options: CommandBarOptions;
     private lateinit var onFallbackAction: FallbackActionCallback
+    private var bottomSheetDialog: BottomSheetDialog? = null
     private var articleId: Int?
 
     init {
@@ -110,6 +110,10 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
             ViewGroup.LayoutParams.MATCH_PARENT
         )
 
+        if (options.launchCode == "local") {
+            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        }
+
 
         webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -141,30 +145,35 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
 
     fun openBottomSheetDialog() {
         // Create the BottomSheetDialog
-        var dialog = BottomSheetDialog(context, R.style.HelpHubBottomSheet)
+        bottomSheetDialog = BottomSheetDialog(context, R.style.HelpHubBottomSheet)
         val coordinatorLayout = CoordinatorLayout(context).apply {
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             addView(this@HelpHubWebView)
         }
 
-        dialog.setContentView(coordinatorLayout)
+        bottomSheetDialog?.setContentView(coordinatorLayout)
 
         // Adjust the height of the dialog to match the screen height
         val windowHeight = Resources.getSystem().displayMetrics.heightPixels
         val sheetHeight = windowHeight - context.dpToPx(40)
-        dialog.behavior.peekHeight = sheetHeight
+        bottomSheetDialog?.behavior?.peekHeight = sheetHeight
         this.layoutParams.height = sheetHeight
-        dialog.behavior.maxHeight = sheetHeight
+        bottomSheetDialog?.behavior?.maxHeight = sheetHeight
 
-        val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet);
+        val bottomSheet = bottomSheetDialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet);
         // Show the dialog using the post method to wait for the view to be fully measured and laid out
-        dialog.show()
+        bottomSheetDialog?.show()
 
         if (bottomSheet != null) {
             bottomSheet.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
         }
     }
 
+    fun closeBottomSheetDialog() {
+        bottomSheetDialog?.dismiss()
+        bottomSheetDialog = null
+        this.destroy()
+    }
 
     companion object {
 
