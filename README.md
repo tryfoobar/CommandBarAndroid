@@ -43,7 +43,7 @@ import com.commandbar.android.HelpHubWebView;
     -   `orgId` (required): Your Organization ID from [CommandBar](https://app.commandbar.com)
     -   `spinnerColor` (optional): Optionally specify a color to render the loading Spinner
 -   `articleId` (optional): Optionally specify an article ID to open a specific article in HelpHub
--   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with
+-   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with in HelpHub/Copilot
 
 ### `HelpHubWebView`
 
@@ -54,7 +54,7 @@ import com.commandbar.android.HelpHubWebView;
     -   `orgId` (required): Your Organization ID from [CommandBar](https://app.commandbar.com)
     -   `spinnerColor` (optional): Optionally specify a color to render the loading Spinner
 -   `articleId` (optional): Optionally specify an article ID to open a specific article in HelpHub
--   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with
+-   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with HelpHub/Copilot
 
 ### Run the Example
 
