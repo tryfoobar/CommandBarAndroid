@@ -17,6 +17,7 @@ object CommandBar {
                 options,
                 articleId,
                 onFallbackAction,
+                engagementShell = "resource-center",
                 engagementInitialPage = "help-hub",
             )
             currentResourceCenterWebView?.openBottomSheetDialog()
@@ -32,12 +33,13 @@ object CommandBar {
                 options,
                 articleId = null,
                 onFallbackAction,
-                engagementInitialPage = "assistant",
+                engagementShell = "assistant",
             )
             currentResourceCenterWebView?.openBottomSheetDialog()
         }
 
         fun closeResourceCenter() {
+            currentResourceCenterWebView?.closeEngagementShell()
             currentResourceCenterWebView?.closeBottomSheetDialog()
             currentResourceCenterWebView = null
         }

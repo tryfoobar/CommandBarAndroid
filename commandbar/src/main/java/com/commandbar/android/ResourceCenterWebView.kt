@@ -35,6 +35,7 @@ class ResourceCenterWebView(
     options: CommandBarOptions? = null,
     articleId: Int? = null,
     onFallbackAction: FallbackActionCallback? = null,
+    private val engagementShell: String = "resource-center",
     private val engagementInitialPage: String = "help-hub",
 ) : WebView(context) {
     private lateinit var options: CommandBarOptions
@@ -145,7 +146,7 @@ class ResourceCenterWebView(
                     "(function() { return !!window.__ampMobileResourceCenterLoaded; })();")
                     { result ->
                         if (!isEvaluateJavascriptTruthy(result)) {
-                            val snippet = getSnippet(options, articleId, engagementInitialPage)
+                            val snippet = getSnippet(options, articleId, engagementShell, engagementInitialPage)
                             webView.evaluateJavascript(snippet) { }
                         }
                     }
@@ -202,6 +203,11 @@ class ResourceCenterWebView(
         evaluateJavascript(buildApplyEngagementFiltersJavaScript()) { }
     }
 
+    /** Tears down the in-WebView engagement UI (`assistant.close()` or hide Resource Center). */
+    fun closeEngagementShell() {
+        evaluateJavascript(buildCloseEngagementShellJavaScript()) { }
+    }
+
     private fun isEvaluateJavascriptTruthy(result: String?): Boolean {
         val trimmed = result?.trim() ?: return false
         return trimmed == "true" || trimmed == "\"true\""
@@ -209,6 +215,28 @@ class ResourceCenterWebView(
 
     companion object {
         internal const val TAG_RESOURCE_CENTER_WEB_VIEW = "ResourceCenterWebView"
+
+        @JvmStatic
+        fun buildCloseEngagementShellJavaScript(): String {
+            return """
+                (function() {
+                    var shell = window.__ampEngagementShell || "resource-center";
+                    if (shell === "assistant") {
+                        try {
+                            if (window.engagement && window.engagement.assistant && typeof window.engagement.assistant.close === "function") {
+                                window.engagement.assistant.close();
+                            }
+                        } catch (e1) {}
+                        return;
+                    }
+                    try {
+                        if (window.engagement && typeof window.engagement._showResourceCenter === "function") {
+                            window.engagement._showResourceCenter(false);
+                        }
+                    } catch (e2) {}
+                })();
+            """.trimIndent()
+        }
 
         @JvmStatic
         fun buildApplyEngagementFiltersJavaScript(): String {
@@ -234,11 +262,13 @@ class ResourceCenterWebView(
         private fun getSnippet(
             options: CommandBarOptions,
             articleId: Int? = null,
+            engagementShell: String = "resource-center",
             engagementInitialPage: String = "help-hub",
         ): String {
             val apiKey = JSONObject.quote(options.orgId)
             val userIdRaw = options.userId?.let { JSONObject.quote(it) } ?: "null"
             val articleIdJs = articleId?.toString() ?: "null"
+            val engagementShellJs = JSONObject.quote(engagementShell)
             val engagementInitialPageJs = JSONObject.quote(engagementInitialPage)
             val launchCode = JSONObject.quote(options.launchCode ?: "prod")
             val zone =
@@ -306,6 +336,7 @@ class ResourceCenterWebView(
                       function relay(ev) {
                           if (fired || !eventIndicatesResourceCenterClose(ev)) { return; }
                           fired = true;
+                          closeEngagementShell();
                           notifyNativeResourceCenterClosed();
                       }
                       document.addEventListener("pointerdown", relay, true);
@@ -322,6 +353,8 @@ class ResourceCenterWebView(
                   var articleId = $articleIdJs;
                   var launchCode = $launchCode;
                   var localDevHost = $localDevHost;
+                  var engagementShell = $engagementShellJs;
+                  window.__ampEngagementShell = engagementShell;
                   var engagementInitialPage = $engagementInitialPageJs;
                   var nativeResourceCenterFilter = $resourceCenterFilterJs;
                   var nativeAssistantFilter = $assistantFilterJs;
@@ -397,6 +430,44 @@ class ResourceCenterWebView(
                       }
                   }
 
+                  function closeEngagementShell() {
+                      if (engagementShell === "assistant") {
+                          try {
+                              if (window.engagement && window.engagement.assistant && typeof window.engagement.assistant.close === "function") {
+                                  window.engagement.assistant.close();
+                              }
+                          } catch (e1) {}
+                          return;
+                      }
+                      try {
+                          if (window.engagement && typeof window.engagement._showResourceCenter === "function") {
+                              window.engagement._showResourceCenter(false);
+                          }
+                      } catch (e2) {}
+                  }
+
+                  function openAssistant() {
+                      hideNativeLoadingSpinner();
+                      try {
+                          window.dispatchEvent(new Event("resize"));
+                      } catch (e1) {}
+                      requestAnimationFrame(function () {
+                          requestAnimationFrame(function () {
+                              try {
+                                  if (window.engagement && window.engagement.assistant && typeof window.engagement.assistant.show === "function") {
+                                      window.engagement.assistant.show({ initialPage: "chat" });
+                                  }
+                                  try {
+                                      window.dispatchEvent(new Event("resize"));
+                                  } catch (e2) {}
+                              } catch (e3) {
+                                  ampLog("[Amplitude Engagement] assistant.show: " + e3);
+                              }
+                              window.__ampMobileResourceCenterLoaded = true;
+                          });
+                      });
+                  }
+
                   function openResourceCenter() {
                       hideNativeLoadingSpinner();
                       var opts = { initialPage: engagementInitialPage };
@@ -421,6 +492,14 @@ class ResourceCenterWebView(
                       });
                   }
 
+                  function openEngagementShell() {
+                      if (engagementShell === "assistant") {
+                          openAssistant();
+                      } else {
+                          openResourceCenter();
+                      }
+                  }
+
                   function tryBootAfterEngagementScript() {
                       var attempts = 0;
                       var maxAttempts = 120;
@@ -443,13 +522,13 @@ class ResourceCenterWebView(
                               if (p && typeof p.then === "function") {
                                   p.then(function () {
                                       applyNativeEngagementFilters();
-                                      openResourceCenter();
+                                      openEngagementShell();
                                   }).catch(function (err) {
                                       ampLog("[Amplitude Engagement] boot failed: " + err);
                                   });
                               } else {
                                   applyNativeEngagementFilters();
-                                  openResourceCenter();
+                                  openEngagementShell();
                               }
                           } catch (e) {
                               ampLog("[Amplitude Engagement] boot setup failed: " + e);

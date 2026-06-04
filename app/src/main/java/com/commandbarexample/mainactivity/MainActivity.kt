@@ -33,6 +33,17 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Text(text = "Open Resource Center")
                     }
+                                        Button(
+                        onClick = {
+                            CommandBar.openAssistant( (this@MainActivity), CommandBarOptions("6dba5c25868be3716e69f525035e33b6"), onFallbackAction = {
+                                println("Received fallback action")
+                                    CommandBar.closeAssistant()
+                                })
+                      },
+                        modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center)
+                    ) {
+                        Text(text = "Open Assistant")
+                    }
                 }
             }
         }
