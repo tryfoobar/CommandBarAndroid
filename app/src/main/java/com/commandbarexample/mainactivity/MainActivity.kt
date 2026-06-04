@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                       },
                         modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center)
                     ) {
-                        Text(text = "Open HelpHub")
+                        Text(text = "Open Resource Center")
                     }
                 }
             }

@@ -1,9 +1,10 @@
 package com.commandbar.android
 
 import android.content.Context
+import org.json.JSONObject
 
 object CommandBar {
-      private var currentHelpHubWebView: HelpHubWebView? = null
+      private var currentResourceCenterWebView: ResourceCenterWebView? = null
 
         fun openResourceCenter(
             context: Context,
@@ -11,14 +12,14 @@ object CommandBar {
             articleId: Int? = null,
             onFallbackAction: FallbackActionCallback? = null,
         ) {
-            currentHelpHubWebView = HelpHubWebView(
+            currentResourceCenterWebView = ResourceCenterWebView(
                 context,
                 options,
                 articleId,
                 onFallbackAction,
                 engagementInitialPage = "help-hub",
             )
-            currentHelpHubWebView?.openBottomSheetDialog()
+            currentResourceCenterWebView?.openBottomSheetDialog()
         }
 
         fun openAssistant(
@@ -26,18 +27,30 @@ object CommandBar {
             options: CommandBarOptions,
             onFallbackAction: FallbackActionCallback? = null,
         ) {
-            currentHelpHubWebView = HelpHubWebView(
+            currentResourceCenterWebView = ResourceCenterWebView(
                 context,
                 options,
                 articleId = null,
                 onFallbackAction,
                 engagementInitialPage = "assistant",
             )
-            currentHelpHubWebView?.openBottomSheetDialog()
+            currentResourceCenterWebView?.openBottomSheetDialog()
         }
 
         fun closeResourceCenter() {
-            currentHelpHubWebView?.closeBottomSheetDialog()
-            currentHelpHubWebView = null
+            currentResourceCenterWebView?.closeBottomSheetDialog()
+            currentResourceCenterWebView = null
+        }
+
+        /** Mirrors `window.engagement.assistant.setAssistantFilter`. Pass null to clear. */
+        fun setAssistantFilter(filter: JSONObject?) {
+            EngagementFilterStore.setAssistantFilter(filter)
+            currentResourceCenterWebView?.applyEngagementFilters()
+        }
+
+        /** Mirrors `window.engagement.setResourceCenterFilter`. Pass null to clear. */
+        fun setResourceCenterFilter(filter: JSONObject?) {
+            EngagementFilterStore.setResourceCenterFilter(filter)
+            currentResourceCenterWebView?.applyEngagementFilters()
         }
 }

@@ -30,7 +30,7 @@ fun Context.pxToDp(px: Int): Float {
     return (px.toFloat() / resources.displayMetrics.density)
 }
 
-class HelpHubWebView(
+class ResourceCenterWebView(
     context: Context,
     options: CommandBarOptions? = null,
     articleId: Int? = null,
@@ -87,7 +87,7 @@ class HelpHubWebView(
         @JavascriptInterface
         fun engagement__log(msg: String?) {
             if (!msg.isNullOrEmpty()) {
-                Log.d(TAG_HELP_HUB_WEB_VIEW, msg)
+                Log.d(TAG_RESOURCE_CENTER_WEB_VIEW, msg)
             }
         }
 
@@ -142,7 +142,7 @@ class HelpHubWebView(
             override fun onPageFinished(view: WebView?, url: String?) {
                 val webView = view ?: return
                 webView.evaluateJavascript(
-                    "(function() { return !!window.__ampMobileHelpHubLoaded; })();")
+                    "(function() { return !!window.__ampMobileResourceCenterLoaded; })();")
                     { result ->
                         if (!isEvaluateJavascriptTruthy(result)) {
                             val snippet = getSnippet(options, articleId, engagementInitialPage)
@@ -167,10 +167,10 @@ class HelpHubWebView(
 
     fun openBottomSheetDialog() {
         // Create the BottomSheetDialog
-        bottomSheetDialog = BottomSheetDialog(context, R.style.HelpHubBottomSheet)
+        bottomSheetDialog = BottomSheetDialog(context, R.style.ResourceCenterBottomSheet)
         val coordinatorLayout = CoordinatorLayout(context).apply {
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            addView(this@HelpHubWebView)
+            addView(this@ResourceCenterWebView)
         }
 
         bottomSheetDialog?.setContentView(coordinatorLayout)
@@ -197,13 +197,38 @@ class HelpHubWebView(
         this.destroy()
     }
 
+    /** Applies the latest native tag filters to a booted engagement instance. */
+    fun applyEngagementFilters() {
+        evaluateJavascript(buildApplyEngagementFiltersJavaScript()) { }
+    }
+
     private fun isEvaluateJavascriptTruthy(result: String?): Boolean {
         val trimmed = result?.trim() ?: return false
         return trimmed == "true" || trimmed == "\"true\""
     }
 
     companion object {
-        internal const val TAG_HELP_HUB_WEB_VIEW = "HelpHubWebView"
+        internal const val TAG_RESOURCE_CENTER_WEB_VIEW = "ResourceCenterWebView"
+
+        @JvmStatic
+        fun buildApplyEngagementFiltersJavaScript(): String {
+            val rc = EngagementFilterStore.resourceCenterFilterJsonLiteral()
+            val assistant = EngagementFilterStore.assistantFilterJsonLiteral()
+            return """
+                (function() {
+                    try {
+                        if ($rc != null && window.engagement && typeof window.engagement.setResourceCenterFilter === "function") {
+                            window.engagement.setResourceCenterFilter($rc);
+                        }
+                    } catch (e1) {}
+                    try {
+                        if ($assistant != null && window.engagement && window.engagement.assistant && typeof window.engagement.assistant.setAssistantFilter === "function") {
+                            window.engagement.assistant.setAssistantFilter($assistant);
+                        }
+                    } catch (e2) {}
+                })();
+            """.trimIndent()
+        }
 
         @JvmStatic
         private fun getSnippet(
@@ -220,6 +245,8 @@ class HelpHubWebView(
                 if ((options.serverZone ?: "US").uppercase(Locale.US) == "EU") "EU" else "US"
             val serverZone = JSONObject.quote(zone)
             val localDevHost = JSONObject.quote("10.0.2.2")
+            val resourceCenterFilterJs = EngagementFilterStore.resourceCenterFilterJsonLiteral()
+            val assistantFilterJs = EngagementFilterStore.assistantFilterJsonLiteral()
             return """
               (function() {
                   window._cbIsWebView = true;
@@ -287,7 +314,7 @@ class HelpHubWebView(
                   }
                   installNativeResourceCenterCloseBridge();
 
-                  if (window.__ampMobileHelpHubLoaded) { return; }
+                  if (window.__ampMobileResourceCenterLoaded) { return; }
 
                   var apiKey = $apiKey;
                   var serverZone = $serverZone;
@@ -296,6 +323,21 @@ class HelpHubWebView(
                   var launchCode = $launchCode;
                   var localDevHost = $localDevHost;
                   var engagementInitialPage = $engagementInitialPageJs;
+                  var nativeResourceCenterFilter = $resourceCenterFilterJs;
+                  var nativeAssistantFilter = $assistantFilterJs;
+
+                  function applyNativeEngagementFilters() {
+                      try {
+                          if (nativeResourceCenterFilter != null && window.engagement && typeof window.engagement.setResourceCenterFilter === "function") {
+                              window.engagement.setResourceCenterFilter(nativeResourceCenterFilter);
+                          }
+                      } catch (eRc) {}
+                      try {
+                          if (nativeAssistantFilter != null && window.engagement && window.engagement.assistant && typeof window.engagement.assistant.setAssistantFilter === "function") {
+                              window.engagement.assistant.setAssistantFilter(nativeAssistantFilter);
+                          }
+                      } catch (eAsst) {}
+                  }
 
                   function loadScript(src, async, onload, onerror) {
                       var s = document.createElement("script");
@@ -374,7 +416,7 @@ class HelpHubWebView(
                               } catch (e3) {
                                   ampLog("[Amplitude Engagement] _showResourceCenter: " + e3);
                               }
-                              window.__ampMobileHelpHubLoaded = true;
+                              window.__ampMobileResourceCenterLoaded = true;
                           });
                       });
                   }
@@ -400,11 +442,13 @@ class HelpHubWebView(
                               });
                               if (p && typeof p.then === "function") {
                                   p.then(function () {
+                                      applyNativeEngagementFilters();
                                       openResourceCenter();
                                   }).catch(function (err) {
                                       ampLog("[Amplitude Engagement] boot failed: " + err);
                                   });
                               } else {
+                                  applyNativeEngagementFilters();
                                   openResourceCenter();
                               }
                           } catch (e) {

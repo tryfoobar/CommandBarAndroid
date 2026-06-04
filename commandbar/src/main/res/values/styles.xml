@@ -8,7 +8,7 @@
     <item name="android:layout_height">match_parent</item>
 </style>
 
-<style name="HelpHubBottomSheet" parent="Theme.Design.Light.BottomSheetDialog">
+<style name="ResourceCenterBottomSheet" parent="Theme.Design.Light.BottomSheetDialog">
     <item name="bottomSheetStyle">@style/BottomSheetModalHandle</item>
 
     <item name="android:backgroundDimEnabled">true</item>
