@@ -30,7 +30,13 @@ fun Context.pxToDp(px: Int): Float {
     return (px.toFloat() / resources.displayMetrics.density)
 }
 
-class HelpHubWebView(context: Context, options: CommandBarOptions? = null, articleId: Int? = null, onFallbackAction: FallbackActionCallback? = null) : WebView(context) {
+class HelpHubWebView(
+    context: Context,
+    options: CommandBarOptions? = null,
+    articleId: Int? = null,
+    onFallbackAction: FallbackActionCallback? = null,
+    private val engagementInitialPage: String = "help-hub",
+) : WebView(context) {
     private lateinit var options: CommandBarOptions
     private var onFallbackAction: FallbackActionCallback = onFallbackAction ?: { }
     private var bottomSheetDialog: BottomSheetDialog? = null
@@ -58,9 +64,9 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
 
     inner class CommandBarJavaScriptInterface(private var callback: FallbackActionCallback) {
         @JavascriptInterface
-        fun onHelpHubClose() {
+        fun onResourceCenterClose() {
             post {
-                CommandBar.closeHelpHub()
+                CommandBar.closeResourceCenter()
             }
         }
 
@@ -71,7 +77,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
             val type = meta?.get("type") as? String
             post {
                 if (type == "close") {
-                    CommandBar.closeHelpHub()
+                    CommandBar.closeResourceCenter()
                 }
                 callback(actionParam)
             }
@@ -139,7 +145,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
                     "(function() { return !!window.__ampMobileHelpHubLoaded; })();")
                     { result ->
                         if (!isEvaluateJavascriptTruthy(result)) {
-                            val snippet = getSnippet(options, articleId)
+                            val snippet = getSnippet(options, articleId, engagementInitialPage)
                             webView.evaluateJavascript(snippet) { }
                         }
                     }
@@ -200,10 +206,15 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
         internal const val TAG_HELP_HUB_WEB_VIEW = "HelpHubWebView"
 
         @JvmStatic
-        private fun getSnippet(options: CommandBarOptions, articleId: Int? = null): String {
+        private fun getSnippet(
+            options: CommandBarOptions,
+            articleId: Int? = null,
+            engagementInitialPage: String = "help-hub",
+        ): String {
             val apiKey = JSONObject.quote(options.orgId)
             val userIdRaw = options.userId?.let { JSONObject.quote(it) } ?: "null"
             val articleIdJs = articleId?.toString() ?: "null"
+            val engagementInitialPageJs = JSONObject.quote(engagementInitialPage)
             val launchCode = JSONObject.quote(options.launchCode ?: "prod")
             val zone =
                 if ((options.serverZone ?: "US").uppercase(Locale.US) == "EU") "EU" else "US"
@@ -222,10 +233,10 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
                       try { console.log(msg); } catch (e2) {}
                   }
 
-                  function notifyNativeHelpHubClosed() {
+                  function notifyNativeResourceCenterClosed() {
                       try {
-                          if (window.CommandBarAndroidInterface && typeof window.CommandBarAndroidInterface.onHelpHubClose === "function") {
-                              window.CommandBarAndroidInterface.onHelpHubClose();
+                          if (window.CommandBarAndroidInterface && typeof window.CommandBarAndroidInterface.onResourceCenterClose === "function") {
+                              window.CommandBarAndroidInterface.onResourceCenterClose();
                               return;
                           }
                       } catch (eDedicated) {}
@@ -237,7 +248,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
                       } catch (eFallback) {}
                   }
 
-                  function isHelpHubCloseElement(el) {
+                  function isResourceCenterCloseElement(el) {
                       if (!el || typeof el.getAttribute !== "function") { return false; }
                       var tag = (el.tagName || "").toUpperCase();
                       var role = (el.getAttribute("role") || "").toLowerCase();
@@ -246,11 +257,11 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
                       return tag === "BUTTON" || role === "button";
                   }
 
-                  function eventIndicatesHelpHubClose(ev) {
+                  function eventIndicatesResourceCenterClose(ev) {
                       var path = typeof ev.composedPath === "function" ? ev.composedPath() : [];
                       var i = 0;
                       for (i = 0; i < path.length; i++) {
-                          if (isHelpHubCloseElement(path[i])) { return true; }
+                          if (isResourceCenterCloseElement(path[i])) { return true; }
                       }
                       var t = ev.target;
                       if (t && typeof t.closest === "function") {
@@ -261,20 +272,20 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
                       return false;
                   }
 
-                  function installNativeHelpHubCloseBridge() {
-                      if (window.__ampNativeHelpHubCloseBridge) { return; }
-                      window.__ampNativeHelpHubCloseBridge = true;
+                  function installNativeResourceCenterCloseBridge() {
+                      if (window.__ampNativeResourceCenterCloseBridge) { return; }
+                      window.__ampNativeResourceCenterCloseBridge = true;
                       var fired = false;
                       function relay(ev) {
-                          if (fired || !eventIndicatesHelpHubClose(ev)) { return; }
+                          if (fired || !eventIndicatesResourceCenterClose(ev)) { return; }
                           fired = true;
-                          notifyNativeHelpHubClosed();
+                          notifyNativeResourceCenterClosed();
                       }
                       document.addEventListener("pointerdown", relay, true);
                       document.addEventListener("click", relay, true);
                       document.addEventListener("touchend", relay, true);
                   }
-                  installNativeHelpHubCloseBridge();
+                  installNativeResourceCenterCloseBridge();
 
                   if (window.__ampMobileHelpHubLoaded) { return; }
 
@@ -284,6 +295,7 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
                   var articleId = $articleIdJs;
                   var launchCode = $launchCode;
                   var localDevHost = $localDevHost;
+                  var engagementInitialPage = $engagementInitialPageJs;
 
                   function loadScript(src, async, onload, onerror) {
                       var s = document.createElement("script");
@@ -343,9 +355,9 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
                       }
                   }
 
-                  function openHelpHub() {
+                  function openResourceCenter() {
                       hideNativeLoadingSpinner();
-                      var opts = { initialPage: "help-hub" };
+                      var opts = { initialPage: engagementInitialPage };
                       if (articleId !== null && articleId !== undefined) {
                           opts.contentItemId = articleId;
                       }
@@ -388,12 +400,12 @@ class HelpHubWebView(context: Context, options: CommandBarOptions? = null, artic
                               });
                               if (p && typeof p.then === "function") {
                                   p.then(function () {
-                                      openHelpHub();
+                                      openResourceCenter();
                                   }).catch(function (err) {
                                       ampLog("[Amplitude Engagement] boot failed: " + err);
                                   });
                               } else {
-                                  openHelpHub();
+                                  openResourceCenter();
                               }
                           } catch (e) {
                               ampLog("[Amplitude Engagement] boot setup failed: " + e);

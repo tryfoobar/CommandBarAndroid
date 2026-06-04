@@ -24,9 +24,9 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Button(
                         onClick = {
-                            CommandBar.openHelpHub( (this@MainActivity), CommandBarOptions("6dba5c25868be3716e69f525035e33b6"), onFallbackAction = {
+                            CommandBar.openResourceCenter( (this@MainActivity), CommandBarOptions("6dba5c25868be3716e69f525035e33b6"), onFallbackAction = {
                                 println("Received fallback action")
-                                CommandBar.closeHelpHub()
+                                CommandBar.closeResourceCenter()
                             })
                       },
                         modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center)

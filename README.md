@@ -43,7 +43,11 @@ import com.commandbar.android.HelpHubWebView;
 
 ### `CommandBar`
 
-`openHelpHub`: Opens the HelpHub in a BottomSheetDialog
+`openResourceCenter`: Opens Guides & Surveys Resource Center (Help Hub tab) in a BottomSheetDialog
+
+`openAssistant`: Opens the Assistant tab in a BottomSheetDialog
+
+`closeResourceCenter`: Dismisses the bottom sheet
 
 -   `context` (required): An instance of the Context/Activity to open a BottomSheetDialog on
 -   `options` (required): An instance of the `CommandBarOptions` class that holds the options for the `HelpHubWebView``.

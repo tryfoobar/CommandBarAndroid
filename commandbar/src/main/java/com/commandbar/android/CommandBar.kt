@@ -5,13 +5,39 @@ import android.content.Context
 object CommandBar {
       private var currentHelpHubWebView: HelpHubWebView? = null
 
-        fun openHelpHub(context: Context, options: CommandBarOptions, articleId: Int? = null, onFallbackAction: FallbackActionCallback? = null) {
-                currentHelpHubWebView = HelpHubWebView(context, options, articleId, onFallbackAction)
-                currentHelpHubWebView?.openBottomSheetDialog()
+        fun openResourceCenter(
+            context: Context,
+            options: CommandBarOptions,
+            articleId: Int? = null,
+            onFallbackAction: FallbackActionCallback? = null,
+        ) {
+            currentHelpHubWebView = HelpHubWebView(
+                context,
+                options,
+                articleId,
+                onFallbackAction,
+                engagementInitialPage = "help-hub",
+            )
+            currentHelpHubWebView?.openBottomSheetDialog()
         }
 
-        fun closeHelpHub() {
-                currentHelpHubWebView?.closeBottomSheetDialog()
-                currentHelpHubWebView = null
+        fun openAssistant(
+            context: Context,
+            options: CommandBarOptions,
+            onFallbackAction: FallbackActionCallback? = null,
+        ) {
+            currentHelpHubWebView = HelpHubWebView(
+                context,
+                options,
+                articleId = null,
+                onFallbackAction,
+                engagementInitialPage = "assistant",
+            )
+            currentHelpHubWebView?.openBottomSheetDialog()
+        }
+
+        fun closeResourceCenter() {
+            currentHelpHubWebView?.closeBottomSheetDialog()
+            currentHelpHubWebView = null
         }
 }
