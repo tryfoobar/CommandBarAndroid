@@ -11,6 +11,13 @@ Copilot & HelpHub in Android
 -   Java 17
 -   Android Studio
 
+## Amplitude Guides & Surveys
+
+The Help Hub `WebView` loads the standalone Guides & Surveys script (`script/<API_KEY>.engagement.js`), then `init` + `boot` per the [Guides & Surveys SDK](https://amplitude.com/docs/sdks/guides-and-surveys/sdk).
+
+- Pass your Amplitude **project API key** as `orgId` in `CommandBarOptions`.
+- Optional `serverZone`: `"US"` (default) or `"EU"`.
+
 ## Installation
 
 ### Maven Central
@@ -40,8 +47,9 @@ import com.commandbar.android.HelpHubWebView;
 
 -   `context` (required): An instance of the Context/Activity to open a BottomSheetDialog on
 -   `options` (required): An instance of the `CommandBarOptions` class that holds the options for the `HelpHubWebView``.
-    -   `orgId` (required): Your Organization ID from [CommandBar](https://app.commandbar.com)
+    -   `orgId` (required): Your Amplitude **project API key** for Guides & Surveys (legacy CommandBar org id no longer applies to the Help Hub WebView)
     -   `spinnerColor` (optional): Optionally specify a color to render the loading Spinner
+    -   `serverZone` (optional): `"US"` (default) or `"EU"`
 -   `articleId` (optional): Optionally specify an article ID to open a specific article in HelpHub
 -   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with in HelpHub/Copilot
 
@@ -51,8 +59,9 @@ import com.commandbar.android.HelpHubWebView;
 
 -   `context` (required): An instance of the Context/Activity to attach to
 -   `options` (optional): An instance of the `CommandBarOptions` class that holds the options for the `HelpHubWebView``.
-    -   `orgId` (required): Your Organization ID from [CommandBar](https://app.commandbar.com)
+    -   `orgId` (required): Your Amplitude **project API key** for Guides & Surveys (legacy CommandBar org id no longer applies to the Help Hub WebView)
     -   `spinnerColor` (optional): Optionally specify a color to render the loading Spinner
+    -   `serverZone` (optional): `"US"` (default) or `"EU"`
 -   `articleId` (optional): Optionally specify an article ID to open a specific article in HelpHub
 -   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with HelpHub/Copilot
 
