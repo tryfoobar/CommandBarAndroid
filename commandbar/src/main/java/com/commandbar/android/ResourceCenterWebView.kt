@@ -17,7 +17,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.commandbar.R
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import org.json.JSONObject
-import java.util.Locale
 
 
 typealias FallbackActionCallback = ((action: Map<String, Any>) -> Unit)
@@ -258,6 +257,18 @@ class ResourceCenterWebView(
             """.trimIndent()
         }
 
+        /**
+         * Serializes a [CommandBarUser] to the `{ user_id, device_id }` JSON shape the web SDK expects,
+         * or `"null"` when no identity was supplied.
+         */
+        private fun buildNativeUserJsLiteral(user: CommandBarUser?): String {
+            if (user == null || (user.userId == null && user.deviceId == null)) return "null"
+            val json = JSONObject()
+            user.userId?.let { json.put("user_id", it) }
+            user.deviceId?.let { json.put("device_id", it) }
+            return json.toString()
+        }
+
         @JvmStatic
         private fun getSnippet(
             options: CommandBarOptions,
@@ -265,16 +276,17 @@ class ResourceCenterWebView(
             engagementShell: String = "resource-center",
             engagementInitialPage: String = "help-hub",
         ): String {
-            val apiKey = JSONObject.quote(options.orgId)
-            val userIdRaw = options.userId?.let { JSONObject.quote(it) } ?: "null"
+            val apiKey = JSONObject.quote(options.apiKey)
+            val nativeUserJs = buildNativeUserJsLiteral(options.user)
             val articleIdJs = articleId?.toString() ?: "null"
             val engagementShellJs = JSONObject.quote(engagementShell)
             val engagementInitialPageJs = JSONObject.quote(engagementInitialPage)
-            val launchCode = JSONObject.quote(options.launchCode ?: "prod")
-            val zone =
-                if ((options.serverZone ?: "US").uppercase(Locale.US) == "EU") "EU" else "US"
-            val serverZone = JSONObject.quote(zone)
-            val localDevHost = JSONObject.quote("10.0.2.2")
+            val serverZone = JSONObject.quote(options.serverZone.value)
+            val serverUrlJs = options.serverUrl?.let { JSONObject.quote(it) } ?: "null"
+            val cdnUrlJs = options.cdnUrl?.let { JSONObject.quote(it) } ?: "null"
+            val chatUrlJs = options.chatUrl?.let { JSONObject.quote(it) } ?: "null"
+            val mediaUrlJs = options.mediaUrl?.let { JSONObject.quote(it) } ?: "null"
+            val localeJs = options.locale?.let { JSONObject.quote(it) } ?: "null"
             val resourceCenterFilterJs = EngagementFilterStore.resourceCenterFilterJsonLiteral()
             val assistantFilterJs = EngagementFilterStore.assistantFilterJsonLiteral()
             return """
@@ -349,10 +361,13 @@ class ResourceCenterWebView(
 
                   var apiKey = $apiKey;
                   var serverZone = $serverZone;
-                  var userIdRaw = $userIdRaw;
+                  var nativeUser = $nativeUserJs;
+                  var nativeServerUrl = $serverUrlJs;
+                  var nativeCdnUrl = $cdnUrlJs;
+                  var nativeChatUrl = $chatUrlJs;
+                  var nativeMediaUrl = $mediaUrlJs;
+                  var nativeLocale = $localeJs;
                   var articleId = $articleIdJs;
-                  var launchCode = $launchCode;
-                  var localDevHost = $localDevHost;
                   var engagementShell = $engagementShellJs;
                   window.__ampEngagementShell = engagementShell;
                   var engagementInitialPage = $engagementInitialPageJs;
@@ -458,22 +473,25 @@ class ResourceCenterWebView(
                   }
 
                   function engagementScriptUrl() {
-                      var cdnBase = serverZone === "EU" ? "https://cdn.eu.amplitude.com" : "https://cdn.amplitude.com";
+                      var cdnBase = nativeCdnUrl
+                          ? nativeCdnUrl
+                          : (serverZone === "EU" ? "https://cdn.eu.amplitude.com" : "https://cdn.amplitude.com");
                       return cdnBase + "/script/" + encodeURIComponent(apiKey) + ".engagement.js";
                   }
 
                   function engagementInitOptions() {
-                      var o = { serverZone: serverZone === "EU" ? "EU" : "US" };
-                      if (launchCode === "local") {
-                          o.serverUrl = "http://" + localDevHost + ":8000";
-                          o.cdnUrl = "http://" + localDevHost + ":8000";
-                      }
+                      var o = { serverZone: serverZone };
+                      if (nativeServerUrl) { o.serverUrl = nativeServerUrl; }
+                      if (nativeCdnUrl) { o.cdnUrl = nativeCdnUrl; }
+                      if (nativeChatUrl) { o.chatUrl = nativeChatUrl; }
+                      if (nativeMediaUrl) { o.mediaUrl = nativeMediaUrl; }
+                      if (nativeLocale) { o.locale = nativeLocale; }
                       return o;
                   }
 
                   function buildUser() {
-                      if (userIdRaw) {
-                          return { user_id: userIdRaw };
+                      if (nativeUser && (nativeUser.user_id || nativeUser.device_id)) {
+                          return nativeUser;
                       }
                       try {
                           var k = "__amp_engagement_wv_device";

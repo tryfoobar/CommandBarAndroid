@@ -18,8 +18,9 @@ Assistant & Resource Center in Android
 
 The Resource Center / Assistant `WebView` loads the standalone Guides & Surveys script (`script/<API_KEY>.engagement.js`), then `init` + `boot` per the [Guides & Surveys SDK](https://amplitude.com/docs/sdks/guides-and-surveys/sdk).
 
-- Pass your Amplitude **project API key** as `orgId` in `CommandBarOptions`.
-- Optional `serverZone`: `"US"` (default) or `"EU"`.
+- Pass your Amplitude **project API key** as `apiKey` in `CommandBarOptions`.
+- Optional `serverZone`: `ServerZone.US` (default), `ServerZone.EU`, or `ServerZone.LOCAL`.
+- Optional `serverUrl`, `cdnUrl`, `chatUrl`, `mediaUrl`, `locale` to override Amplitude endpoints (forwarded to `engagement.init`).
 
 ## Installation
 
@@ -45,6 +46,12 @@ import com.commandbar.android.ResourceCenterWebView;
 ```
 
 ### `CommandBar`
+
+`boot`: Stores your [`CommandBarOptions`] for reuse by every subsequent `openResourceCenter` / `openAssistant` call. Call once at app start (e.g. in `Application.onCreate`) and again to swap in new options after the user signs in.
+
+```kotlin
+CommandBar.boot(CommandBarOptions(apiKey = "YOUR_API_KEY"))
+```
 
 `openResourceCenter`: Opens Guides & Surveys Resource Center (Help Hub tab) in a BottomSheetDialog
 
@@ -73,23 +80,40 @@ CommandBar.setResourceCenterFilter(
 )
 ```
 
+`CommandBar.openResourceCenter(context, articleId?, onFallbackAction?)` / `CommandBar.openAssistant(context, onFallbackAction?)` arguments:
+
 -   `context` (required): An instance of the Context/Activity to open a BottomSheetDialog on
--   `options` (required): An instance of the `CommandBarOptions` class that holds the options for the `ResourceCenterWebView``.
-    -   `orgId` (required): Your Amplitude **project API key** for Guides & Surveys (legacy CommandBar org id no longer applies to the Help Hub WebView)
-    -   `spinnerColor` (optional): Optionally specify a color to render the loading Spinner
-    -   `serverZone` (optional): `"US"` (default) or `"EU"`
--   `articleId` (optional): Optionally specify an article ID to open a specific article in ResourceCenter
--   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with in Assistant/Resource Center
+-   `articleId` (optional, `openResourceCenter` only): Specify an article ID to deep-link into a specific article
+-   `onFallbackAction` (optional): Callback fired when a Fallback CTA is interacted with in Assistant/Resource Center
+
+Options for `CommandBar.boot(CommandBarOptions(...))`:
+
+-   `apiKey` (required): Your Amplitude **project API key** for Guides & Surveys
+-   `user` (optional): `CommandBarUser(userId = ..., deviceId = ...)`. Flat shorthand also accepted as `userId = ...` on the constructor.
+-   `serverZone` (optional): `ServerZone.US` (default), `ServerZone.EU`, or `ServerZone.LOCAL`
+-   `serverUrl`, `cdnUrl`, `chatUrl`, `mediaUrl`, `locale` (optional): forwarded to `engagement.init`
+-   `spinnerColor` (optional): Color used by the loading spinner
+
+```kotlin
+// Flat shorthand
+CommandBar.boot(CommandBarOptions(apiKey = "YOUR_API_KEY", userId = "user-123"))
+
+// Nested form with explicit device id and overrides
+CommandBar.boot(
+    CommandBarOptions(
+        apiKey = "YOUR_API_KEY",
+        user = CommandBarUser(userId = "user-123", deviceId = "device-abc"),
+        serverZone = ServerZone.EU,
+    )
+)
+```
 
 ### `ResourceCenterWebView`
 
-`init`: Loads ResourceCenter in a WebView. The WebView won't load its content until options are set on intialization or via setters
+`init`: Loads ResourceCenter in a WebView. The WebView won't load its content until options are set on initialization or via setters.
 
 -   `context` (required): An instance of the Context/Activity to attach to
--   `options` (optional): An instance of the `CommandBarOptions` class that holds the options for the `ResourceCenterWebView``.
-    -   `orgId` (required): Your Amplitude **project API key** for Guides & Surveys (legacy CommandBar org id no longer applies to the Help Hub WebView)
-    -   `spinnerColor` (optional): Optionally specify a color to render the loading Spinner
-    -   `serverZone` (optional): `"US"` (default) or `"EU"`
+-   `options` (optional): An instance of the `CommandBarOptions` class as documented above
 -   `articleId` (optional): Optionally specify an article ID to open a specific article in ResourceCenter
 -   `onFallbackAction` (optional): A callback function to receive an event when a Fallback CTA is interacted with in Assistant/Resource Center
 

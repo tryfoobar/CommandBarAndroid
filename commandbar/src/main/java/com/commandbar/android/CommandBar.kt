@@ -1,58 +1,93 @@
 package com.commandbar.android
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONObject
 
+/**
+ * Public entry point for the Amplitude Engagement WebView SDK on Android.
+ *
+ * Lifecycle:
+ * 1. Call [boot] once at app start with your [CommandBarOptions].
+ * 2. Call [openResourceCenter] / [openAssistant] later — they use the booted options.
+ */
 object CommandBar {
-      private var currentResourceCenterWebView: ResourceCenterWebView? = null
+    private const val TAG = "CommandBar"
 
-        fun openResourceCenter(
-            context: Context,
-            options: CommandBarOptions,
-            articleId: Int? = null,
-            onFallbackAction: FallbackActionCallback? = null,
-        ) {
-            currentResourceCenterWebView = ResourceCenterWebView(
-                context,
-                options,
-                articleId,
-                onFallbackAction,
-                engagementShell = "resource-center",
-                engagementInitialPage = "help-hub",
-            )
-            currentResourceCenterWebView?.openBottomSheetDialog()
-        }
+    private var currentResourceCenterWebView: ResourceCenterWebView? = null
 
-        fun openAssistant(
-            context: Context,
-            options: CommandBarOptions,
-            onFallbackAction: FallbackActionCallback? = null,
-        ) {
-            currentResourceCenterWebView = ResourceCenterWebView(
-                context,
-                options,
-                articleId = null,
-                onFallbackAction,
-                engagementShell = "assistant",
-            )
-            currentResourceCenterWebView?.openBottomSheetDialog()
-        }
+    /** Configuration stored by the most recent [boot] call. Used by every subsequent open call. */
+    @JvmStatic
+    @Volatile
+    var bootOptions: CommandBarOptions? = null
+        private set
 
-        fun closeResourceCenter() {
-            currentResourceCenterWebView?.closeEngagementShell()
-            currentResourceCenterWebView?.closeBottomSheetDialog()
-            currentResourceCenterWebView = null
-        }
+    /** Stores the configuration used by subsequent [openResourceCenter] / [openAssistant] calls. */
+    @JvmStatic
+    fun boot(options: CommandBarOptions) {
+        bootOptions = options
+    }
 
-        /** Mirrors `window.engagement.assistant.setAssistantFilter`. Pass null to clear. */
-        fun setAssistantFilter(filter: JSONObject?) {
-            EngagementFilterStore.setAssistantFilter(filter)
-            currentResourceCenterWebView?.applyEngagementFilters()
+    @JvmStatic
+    @JvmOverloads
+    fun openResourceCenter(
+        context: Context,
+        articleId: Int? = null,
+        onFallbackAction: FallbackActionCallback? = null,
+    ) {
+        val options = bootOptions ?: run {
+            Log.w(TAG, "openResourceCenter called before boot(options); no-op.")
+            return
         }
+        currentResourceCenterWebView = ResourceCenterWebView(
+            context,
+            options,
+            articleId,
+            onFallbackAction,
+            engagementShell = "resource-center",
+            engagementInitialPage = "help-hub",
+        )
+        currentResourceCenterWebView?.openBottomSheetDialog()
+    }
 
-        /** Mirrors `window.engagement.setResourceCenterFilter`. Pass null to clear. */
-        fun setResourceCenterFilter(filter: JSONObject?) {
-            EngagementFilterStore.setResourceCenterFilter(filter)
-            currentResourceCenterWebView?.applyEngagementFilters()
+    @JvmStatic
+    @JvmOverloads
+    fun openAssistant(
+        context: Context,
+        onFallbackAction: FallbackActionCallback? = null,
+    ) {
+        val options = bootOptions ?: run {
+            Log.w(TAG, "openAssistant called before boot(options); no-op.")
+            return
         }
+        currentResourceCenterWebView = ResourceCenterWebView(
+            context,
+            options,
+            articleId = null,
+            onFallbackAction,
+            engagementShell = "assistant",
+        )
+        currentResourceCenterWebView?.openBottomSheetDialog()
+    }
+
+    @JvmStatic
+    fun closeResourceCenter() {
+        currentResourceCenterWebView?.closeEngagementShell()
+        currentResourceCenterWebView?.closeBottomSheetDialog()
+        currentResourceCenterWebView = null
+    }
+
+    /** Mirrors `window.engagement.assistant.setAssistantFilter`. Pass null to clear. */
+    @JvmStatic
+    fun setAssistantFilter(filter: JSONObject?) {
+        EngagementFilterStore.setAssistantFilter(filter)
+        currentResourceCenterWebView?.applyEngagementFilters()
+    }
+
+    /** Mirrors `window.engagement.setResourceCenterFilter`. Pass null to clear. */
+    @JvmStatic
+    fun setResourceCenterFilter(filter: JSONObject?) {
+        EngagementFilterStore.setResourceCenterFilter(filter)
+        currentResourceCenterWebView?.applyEngagementFilters()
+    }
 }

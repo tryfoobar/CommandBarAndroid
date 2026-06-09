@@ -18,27 +18,36 @@ import com.commandbar.android.CommandBarOptions
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        CommandBar.boot(CommandBarOptions(apiKey = ""))
+
         setContent {
             MainActivityTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Button(
                         onClick = {
-                            CommandBar.openResourceCenter( (this@MainActivity), CommandBarOptions("6dba5c25868be3716e69f525035e33b6"), onFallbackAction = {
-                                println("Received fallback action")
-                                CommandBar.closeResourceCenter()
-                            })
+                            CommandBar.openResourceCenter(
+                                this@MainActivity,
+                                onFallbackAction = {
+                                    println("Received fallback action")
+                                    CommandBar.closeResourceCenter()
+                                },
+                            )
                       },
                         modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center)
                     ) {
                         Text(text = "Open Resource Center")
                     }
-                                        Button(
+                    Button(
                         onClick = {
-                            CommandBar.openAssistant( (this@MainActivity), CommandBarOptions("6dba5c25868be3716e69f525035e33b6"), onFallbackAction = {
-                                println("Received fallback action")
-                                    CommandBar.closeAssistant()
-                                })
+                            CommandBar.openAssistant(
+                                this@MainActivity,
+                                onFallbackAction = {
+                                    println("Received fallback action")
+                                    CommandBar.closeResourceCenter()
+                                },
+                            )
                       },
                         modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center)
                     ) {
