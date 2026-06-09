@@ -133,10 +133,6 @@ class ResourceCenterWebView(
             ViewGroup.LayoutParams.MATCH_PARENT
         )
 
-        if (options.launchCode == "local") {
-            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-        }
-
 
         webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {

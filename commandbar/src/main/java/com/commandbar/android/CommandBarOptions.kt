@@ -69,11 +69,17 @@ data class CommandBarOptions(
     /** CSS color used by the loading spinner shown while the WebView boots Engagement. */
     var spinnerColor: String = "#3662F1",
 ) {
-    /** Flat-form convenience: pass `userId` directly without constructing a [CommandBarUser]. */
+    /**
+     * Flat-form convenience: pass `userId` directly without constructing a [CommandBarUser].
+     *
+     * `userId` is intentionally required (no default) so this overload only resolves
+     * when the caller actually passes `userId =`. Without that, `CommandBarOptions(apiKey = "…")`
+     * would be ambiguous with the primary constructor.
+     */
     @JvmOverloads
     constructor(
         apiKey: String,
-        userId: String? = null,
+        userId: String?,
         serverZone: ServerZone = ServerZone.US,
         serverUrl: String? = null,
         cdnUrl: String? = null,
