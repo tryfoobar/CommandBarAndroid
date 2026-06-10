@@ -58,7 +58,15 @@ CommandBar.boot(CommandBarOptions(apiKey = "YOUR_API_KEY"))
 
 `openAssistant`: Opens the Assistant tab in a BottomSheetDialog
 
-`closeResourceCenter`: Dismisses the bottom sheet
+`closeResourceCenter` / `closeAssistant`: Dismisses whichever engagement sheet
+(Resource Center or Assistant) is currently presented. The two methods are
+aliases — provided for API symmetry with `openResourceCenter` / `openAssistant`
+— and are both no-ops when nothing is presented.
+
+```kotlin
+CommandBar.closeResourceCenter()
+CommandBar.closeAssistant()
+```
 
 `setAssistantFilter` / `setResourceCenterFilter`: Mirrors `window.engagement.assistant.setAssistantFilter` and `window.engagement.setResourceCenterFilter`. Pass `null` to clear. Latest values apply on each WebView load and immediately when the sheet is open.
 

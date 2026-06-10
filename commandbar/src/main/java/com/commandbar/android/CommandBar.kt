@@ -70,11 +70,25 @@ object CommandBar {
         currentResourceCenterWebView?.openBottomSheetDialog()
     }
 
+    /**
+     * Dismisses the presented engagement sheet (Resource Center or Assistant), if any.
+     * The injected WebView bridge picks the correct web-side teardown based on the
+     * active shell, so this method works regardless of which `open*` was used.
+     */
     @JvmStatic
     fun closeResourceCenter() {
         currentResourceCenterWebView?.closeEngagementShell()
         currentResourceCenterWebView?.closeBottomSheetDialog()
         currentResourceCenterWebView = null
+    }
+
+    /**
+     * Symmetric alias for [closeResourceCenter]. Both methods dismiss whichever
+     * engagement sheet (Resource Center or Assistant) is currently presented.
+     */
+    @JvmStatic
+    fun closeAssistant() {
+        closeResourceCenter()
     }
 
     /** Mirrors `window.engagement.assistant.setAssistantFilter`. Pass null to clear. */
