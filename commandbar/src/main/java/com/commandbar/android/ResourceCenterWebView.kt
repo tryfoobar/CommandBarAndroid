@@ -71,7 +71,11 @@ class ResourceCenterWebView(
         }
 
         @JavascriptInterface
-        fun commandbar__onFallbackAction(action: String?) {
+        fun engagement__onFallbackAction(action: String?) {
+            handleFallbackAction(action)
+        }
+
+        private fun handleFallbackAction(action: String?) {
             val actionParam = if (action != null) JSONObject(action).toMap() else emptyMap()
             val meta = actionParam["meta"] as? Map<*, *>
             val type = meta?.get("type") as? String
@@ -307,8 +311,11 @@ class ResourceCenterWebView(
                       } catch (eDedicated) {}
                       var payload = JSON.stringify({ meta: { type: "close" } });
                       try {
-                          if (window.EngagementAndroidInterface && typeof window.EngagementAndroidInterface.commandbar__onFallbackAction === "function") {
-                              window.EngagementAndroidInterface.commandbar__onFallbackAction(payload);
+                          var iface = window.EngagementAndroidInterface;
+                          if (iface && typeof iface.engagement__onFallbackAction === "function") {
+                              iface.engagement__onFallbackAction(payload);
+                          } else if (iface && typeof iface.commandbar__onFallbackAction === "function") {
+                              iface.commandbar__onFallbackAction(payload);
                           }
                       } catch (eFallback) {}
                   }
