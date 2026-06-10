@@ -112,11 +112,11 @@ class ResourceCenterWebView(
 
     private fun resetJavascriptInterface(callback: FallbackActionCallback) {
         try {
-            removeJavascriptInterface("CommandBarAndroidInterface")
+            removeJavascriptInterface("EngagementAndroidInterface")
         } catch (e: Exception) {
             // Do nothing
         } finally {
-            addJavascriptInterface(CommandBarJavaScriptInterface(callback), "CommandBarAndroidInterface")
+            addJavascriptInterface(CommandBarJavaScriptInterface(callback), "EngagementAndroidInterface")
         }
     }
 
@@ -287,12 +287,12 @@ class ResourceCenterWebView(
             val assistantFilterJs = EngagementFilterStore.assistantFilterJsonLiteral()
             return """
               (function() {
-                  window._cbIsWebView = true;
+                  window._ampIsWebView = true;
 
                   function ampLog(msg) {
                       try {
-                          if (window.CommandBarAndroidInterface && typeof window.CommandBarAndroidInterface.engagement__log === "function") {
-                              window.CommandBarAndroidInterface.engagement__log(String(msg));
+                          if (window.EngagementAndroidInterface && typeof window.EngagementAndroidInterface.engagement__log === "function") {
+                              window.EngagementAndroidInterface.engagement__log(String(msg));
                           }
                       } catch (e) {}
                       try { console.log(msg); } catch (e2) {}
@@ -300,15 +300,15 @@ class ResourceCenterWebView(
 
                   function notifyNativeResourceCenterClosed() {
                       try {
-                          if (window.CommandBarAndroidInterface && typeof window.CommandBarAndroidInterface.onResourceCenterClose === "function") {
-                              window.CommandBarAndroidInterface.onResourceCenterClose();
+                          if (window.EngagementAndroidInterface && typeof window.EngagementAndroidInterface.onResourceCenterClose === "function") {
+                              window.EngagementAndroidInterface.onResourceCenterClose();
                               return;
                           }
                       } catch (eDedicated) {}
                       var payload = JSON.stringify({ meta: { type: "close" } });
                       try {
-                          if (window.CommandBarAndroidInterface && typeof window.CommandBarAndroidInterface.commandbar__onFallbackAction === "function") {
-                              window.CommandBarAndroidInterface.commandbar__onFallbackAction(payload);
+                          if (window.EngagementAndroidInterface && typeof window.EngagementAndroidInterface.commandbar__onFallbackAction === "function") {
+                              window.EngagementAndroidInterface.commandbar__onFallbackAction(payload);
                           }
                       } catch (eFallback) {}
                   }
@@ -688,7 +688,12 @@ class ResourceCenterWebView(
                       #helphub-close-button {
                           display: none !important;
                       }
-                      
+
+                      /* Hide the Resource Center "Copy link" header button in the mobile WebView only. */
+                      [data-testid="resource-center-copy-link"] {
+                          display: none !important;
+                      }
+
                       #copilot-container:not(:focus-within) {
                           padding-bottom: 50px;
                       }
