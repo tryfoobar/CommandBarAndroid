@@ -39,6 +39,10 @@ object CommandBar {
             Log.w(TAG, "openResourceCenter called before boot(options); no-op.")
             return
         }
+        // Only one engagement sheet may exist at a time. Dismiss any currently presented
+        // Resource Center / Assistant before opening a new one so repeated or interleaved open
+        // calls cannot stack a second WebView/sheet.
+        dismissCurrentEngagementSheet()
         currentResourceCenterWebView = ResourceCenterWebView(
             context,
             options,
@@ -60,6 +64,10 @@ object CommandBar {
             Log.w(TAG, "openAssistant called before boot(options); no-op.")
             return
         }
+        // Only one engagement sheet may exist at a time. Dismiss any currently presented
+        // Resource Center / Assistant before opening a new one so repeated or interleaved open
+        // calls cannot stack a second WebView/sheet.
+        dismissCurrentEngagementSheet()
         currentResourceCenterWebView = ResourceCenterWebView(
             context,
             options,
@@ -68,6 +76,12 @@ object CommandBar {
             engagementShell = "assistant",
         )
         currentResourceCenterWebView?.openBottomSheetDialog()
+    }
+
+    /** Dismisses and tears down the currently presented engagement WebView, if any. */
+    private fun dismissCurrentEngagementSheet() {
+        currentResourceCenterWebView?.closeBottomSheetDialog()
+        currentResourceCenterWebView = null
     }
 
     /**

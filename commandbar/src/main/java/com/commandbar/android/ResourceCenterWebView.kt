@@ -46,6 +46,10 @@ class ResourceCenterWebView(
     private var bottomSheetDialog: BottomSheetDialog? = null
     private var articleId: Int?
 
+    // Ensures the engagement boot snippet is injected at most once per WebView instance, so a
+    // repeated onPageFinished cannot kick off a second engagement boot in the same document.
+    private var hasInjectedBootSnippet = false
+
     init {
         this.articleId = articleId
         resetJavascriptInterface(this.onFallbackAction)
@@ -242,10 +246,14 @@ class ResourceCenterWebView(
                 // navigation ever lands the main frame on some other URL, re-injecting would boot
                 // a duplicate Assistant — so we skip anything that is not our base document.
                 if (!isEngagementDocumentUrl(url)) return
+                // Inject at most once per instance. The injected JS also guards itself, but this
+                // native gate avoids even evaluating a second snippet for the same document.
+                if (hasInjectedBootSnippet) return
                 webView.evaluateJavascript(
                     "(function() { return !!window.__ampMobileResourceCenterLoaded; })();")
                     { result ->
-                        if (!isEvaluateJavascriptTruthy(result)) {
+                        if (!isEvaluateJavascriptTruthy(result) && !hasInjectedBootSnippet) {
+                            hasInjectedBootSnippet = true
                             val snippet = getSnippet(options, articleId, engagementShell, engagementInitialPage)
                             webView.evaluateJavascript(snippet) { }
                         }
@@ -282,6 +290,11 @@ class ResourceCenterWebView(
     }
 
     fun openBottomSheetDialog() {
+        // Guard against stacking a second sheet for this instance (e.g. a double open call).
+        if (bottomSheetDialog != null) {
+            bottomSheetDialog?.show()
+            return
+        }
         // Create the BottomSheetDialog
         bottomSheetDialog = BottomSheetDialog(context, R.style.ResourceCenterBottomSheet)
         val coordinatorLayout = CoordinatorLayout(context).apply {
@@ -503,7 +516,13 @@ class ResourceCenterWebView(
                   }
                   installNativeResourceCenterCloseBridge();
 
-                  if (window.__ampMobileResourceCenterLoaded) { return; }
+                  // Synchronous duplicate-boot guard. window.__ampMobileResourceCenterLoaded is only
+                  // set once boot() resolves and the shell is shown (async, several frames later), so
+                  // it cannot guard against a second snippet injection that races in before then.
+                  // __ampEngagementBootInvoked is set synchronously right here, so any later injection
+                  // in the same document returns immediately and cannot start a second boot.
+                  if (window.__ampMobileResourceCenterLoaded || window.__ampEngagementBootInvoked) { return; }
+                  window.__ampEngagementBootInvoked = true;
 
                   var apiKey = $apiKey;
                   var serverZone = $serverZone;
@@ -727,6 +746,9 @@ class ResourceCenterWebView(
                   }
 
                   function openEngagementShell() {
+                      // Idempotent: even if boot resolves more than once, only show the shell once.
+                      if (window.__ampEngagementShellShown) { return; }
+                      window.__ampEngagementShellShown = true;
                       if (engagementShell === "assistant") {
                           openAssistant();
                       } else {
