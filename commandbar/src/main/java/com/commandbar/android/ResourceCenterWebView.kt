@@ -4,11 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
+import android.net.Uri
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -172,7 +174,19 @@ class ResourceCenterWebView(
     }
 
     private fun setupWebView (options: CommandBarOptions, articleId: Int? = null) {
-        webChromeClient = WebChromeClient()
+        // A bare WebChromeClient does nothing for `<input type="file">`. Override
+        // onShowFileChooser so the Assistant's image/file upload control opens the system
+        // file picker (matching iOS's WKWebView, which handles this natively).
+        webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                if (filePathCallback == null) return false
+                return EngagementFileChooser.show(context, fileChooserParams, filePathCallback)
+            }
+        }
         setBackgroundColor(Color.TRANSPARENT)
 
         // Enable JavaScript in the WebView
