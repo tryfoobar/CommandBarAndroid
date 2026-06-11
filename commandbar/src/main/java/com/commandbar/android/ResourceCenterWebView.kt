@@ -186,12 +186,48 @@ class ResourceCenterWebView(
                 if (filePathCallback == null) return false
                 return EngagementFileChooser.show(context, fileChooserParams, filePathCallback)
             }
+
+            // Article references in the Assistant open via `window.open()` / `target="_blank"`
+            // (the same path iOS handles in WKUIDelegate.createWebViewWith). Without multi-window
+            // support + this handler, Android loads the link into THIS WebView, replacing the
+            // engagement document; onPageFinished then re-injects the boot snippet and a second
+            // Assistant renders. We instead route the popup URL to the external browser and never
+            // navigate the main WebView. The link target is captured via a throwaway WebView whose
+            // first navigation we intercept (window.open URLs are not otherwise exposed here).
+            override fun onCreateWindow(
+                view: WebView?,
+                isDialog: Boolean,
+                isUserGesture: Boolean,
+                resultMsg: android.os.Message?
+            ): Boolean {
+                val host = view ?: return false
+                val transport = resultMsg?.obj as? WebView.WebViewTransport ?: return false
+
+                val hrefProbe = WebView(host.context)
+                hrefProbe.webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(
+                        probeView: WebView?,
+                        request: WebResourceRequest?
+                    ): Boolean {
+                        request?.url?.let { openUrlExternally(host.context, it) }
+                        probeView?.destroy()
+                        return true
+                    }
+                }
+                transport.webView = hrefProbe
+                resultMsg.sendToTarget()
+                return true
+            }
         }
         setBackgroundColor(Color.TRANSPARENT)
 
         // Enable JavaScript in the WebView
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
+        // Route `window.open()` / `target="_blank"` (e.g. Assistant article references) through
+        // onCreateWindow so they open externally instead of replacing the engagement document.
+        settings.setSupportMultipleWindows(true)
+        settings.javaScriptCanOpenWindowsAutomatically = true
 
         layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -202,6 +238,10 @@ class ResourceCenterWebView(
         webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 val webView = view ?: return
+                // Only (re)inject the boot snippet into our own engagement document. If a
+                // navigation ever lands the main frame on some other URL, re-injecting would boot
+                // a duplicate Assistant — so we skip anything that is not our base document.
+                if (!isEngagementDocumentUrl(url)) return
                 webView.evaluateJavascript(
                     "(function() { return !!window.__ampMobileResourceCenterLoaded; })();")
                     { result ->
@@ -216,14 +256,29 @@ class ResourceCenterWebView(
                 view: WebView?,
                 request: WebResourceRequest?
             ): Boolean {
-                val intent = Intent(Intent.ACTION_VIEW, request!!.url)
-                view!!.context.startActivity(intent)
-                return true;
+                val url = request?.url ?: return false
+                openUrlExternally(view?.context ?: context, url)
+                return true
             }
         }
 
         val html = getHTML(options)
-        loadDataWithBaseURL("https://cdn.amplitude.com", html, "text/html", "UTF-8", null)
+        loadDataWithBaseURL(ENGAGEMENT_BASE_URL, html, "text/html", "UTF-8", null)
+    }
+
+    /** True for the engagement SPA document we host (the only page we boot into). */
+    private fun isEngagementDocumentUrl(url: String?): Boolean {
+        if (url.isNullOrEmpty() || url == "about:blank") return true
+        return url.startsWith(ENGAGEMENT_BASE_URL)
+    }
+
+    /** Opens a link in the device browser, swallowing the case where no handler exists. */
+    private fun openUrlExternally(context: Context, url: Uri) {
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, url))
+        } catch (e: Exception) {
+            Log.w(TAG_RESOURCE_CENTER_WEB_VIEW, "No activity to open url: $url", e)
+        }
     }
 
     fun openBottomSheetDialog() {
@@ -275,6 +330,9 @@ class ResourceCenterWebView(
 
     companion object {
         internal const val TAG_RESOURCE_CENTER_WEB_VIEW = "ResourceCenterWebView"
+
+        /** Base URL used for `loadDataWithBaseURL`; also the document we boot the engagement SPA into. */
+        private const val ENGAGEMENT_BASE_URL = "https://cdn.amplitude.com"
 
         /**
          * The most recently constructed `ResourceCenterWebView`, used by
