@@ -1,10 +1,11 @@
-import com.vanniktech.maven.publish.SonatypeHost
-import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("maven-publish")
-    id("com.vanniktech.maven.publish") version "0.25.3"
+    // Publishes to the Maven Central Portal (central.sonatype.com). 0.34.0 is the
+    // latest version compatible with the pinned toolchain (Gradle 8.6 / AGP 8.2.1
+    // / Kotlin 1.9.22); 0.35.0+ requires Gradle 8.13+ / AGP 8.2.2+. This version
+    // already drops the sunset OSSRH host and defaults to the Central Portal.
+    id("com.vanniktech.maven.publish") version "0.34.0"
 }
 
 android {
@@ -38,36 +39,38 @@ android {
 }
 
 mavenPublishing {
-    mavenPublishing {
-        publishToMavenCentral(SonatypeHost.S01)
+    // No SonatypeHost argument: the plugin uploads to the new Central Portal
+    // (central.sonatype.com). Authenticate with your Central Portal user token via
+    // `mavenCentralUsername` / `mavenCentralPassword` (see README "Publishing").
+    publishToMavenCentral()
 
-        signAllPublications()
+    // GPG signing is required by Maven Central.
+    signAllPublications()
 
-        coordinates("com.commandbar.android", "commandbar", "1.0.10")
+    coordinates("com.commandbar.android", "commandbar", "2.0.0")
 
-        pom {
-            name.set("CommandBarAndroid")
-            description.set("CommandBarSDK for Android")
-            inceptionYear.set("2023")
+    pom {
+        name.set("CommandBarAndroid")
+        description.set("CommandBarSDK for Android")
+        inceptionYear.set("2023")
+        url.set("https://github.com/tryfoobar/CommandBarAndroid/")
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://github.com/tryfoobar/CommandBarAndroid/blob/main/LICENSE")
+            }
+        }
+        developers {
+            developer {
+                id.set("tryfoobar")
+                name.set("tryfoobar")
+                url.set("https://github.com/tryfoobar/")
+            }
+        }
+        scm {
             url.set("https://github.com/tryfoobar/CommandBarAndroid/")
-            licenses {
-                license {
-                    name.set("MIT License")
-                    url.set("https://github.com/tryfoobar/CommandBarAndroid/blob/main/LICENSE")
-                }
-            }
-            developers {
-                developer {
-                    id.set("tryfoobar")
-                    name.set("tryfoobar")
-                    url.set("https://github.com/tryfoobar/")
-                }
-            }
-            scm {
-                url.set("https://github.com/tryfoobar/CommandBarAndroid/")
-                connection.set("scm:git:git://github.com/tryfoobar/CommandBarAndroid.git")
-                developerConnection.set("scm:git:ssh://git@github.com/tryfoobar/CommandBarAndroid.git")
-            }
+            connection.set("scm:git:git://github.com/tryfoobar/CommandBarAndroid.git")
+            developerConnection.set("scm:git:ssh://git@github.com/tryfoobar/CommandBarAndroid.git")
         }
     }
 }
