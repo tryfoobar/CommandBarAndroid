@@ -16,6 +16,7 @@ import android.webkit.WebViewClient
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.commandbar.R
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import java.lang.ref.WeakReference
 import org.json.JSONObject
 
 
@@ -49,6 +50,25 @@ class ResourceCenterWebView(
         if (options != null) {
             this.options = options
             setupWebView(options, this.articleId)
+        }
+
+        // Self-register as the live target for `CommandBar.setResourceCenterFilter` /
+        // `setAssistantFilter`. Mirrors iOS `ResourceCenterWebView.activeInstance = self`.
+        // Both modal-opened views (created in `CommandBar.openResourceCenter` /
+        // `openAssistant`) and inline RN views (created via `ResourceCenterViewManager`)
+        // flow through this constructor, so both surfaces receive live filter updates.
+        // We use a `WeakReference` so the static does not pin the view past its natural
+        // lifecycle; `getActiveInstance()` returns `null` once GC has reclaimed it.
+        activeInstanceRef = WeakReference(this)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        // If we're still the active instance when detached, clear the reference so
+        // subsequent `applyEngagementFilters()` calls do not attempt to drive a view
+        // that has been removed from the window tree.
+        if (activeInstanceRef?.get() === this) {
+            activeInstanceRef = null
         }
     }
 
@@ -215,6 +235,20 @@ class ResourceCenterWebView(
     companion object {
         internal const val TAG_RESOURCE_CENTER_WEB_VIEW = "ResourceCenterWebView"
 
+        /**
+         * The most recently constructed `ResourceCenterWebView`, used by
+         * `CommandBar.setResourceCenterFilter` / `setAssistantFilter` to push live
+         * filter changes into the JS layer. Weak so the static reference does not
+         * prevent GC of an old WebView that is no longer attached. Mirrors iOS
+         * `ResourceCenterWebView.activeInstance` (which is a `weak var`).
+         */
+        @JvmStatic
+        private var activeInstanceRef: WeakReference<ResourceCenterWebView>? = null
+
+        /** Returns the currently active [ResourceCenterWebView], or `null` if none. */
+        @JvmStatic
+        fun getActiveInstance(): ResourceCenterWebView? = activeInstanceRef?.get()
+
         @JvmStatic
         fun buildCloseEngagementShellJavaScript(): String {
             return """
@@ -241,16 +275,25 @@ class ResourceCenterWebView(
         fun buildApplyEngagementFiltersJavaScript(): String {
             val rc = EngagementFilterStore.resourceCenterFilterJsonLiteral()
             val assistant = EngagementFilterStore.assistantFilterJsonLiteral()
+            // We always mutate the `window.__ampNativeRCFilter` / `__ampNativeAssistantFilter`
+            // globals so the boot-time snippet picks up the latest value when it runs
+            // `applyNativeEngagementFilters()` after `engagement.boot()` resolves. This
+            // avoids a race where the native filter was updated between WebView
+            // construction and engagement boot completion. If engagement is already
+            // booted, we also push the change live. `null` (clear) propagates through
+            // both paths intentionally.
             return """
                 (function() {
+                    window.__ampNativeRCFilter = $rc;
+                    window.__ampNativeAssistantFilter = $assistant;
                     try {
-                        if ($rc != null && window.engagement && typeof window.engagement.setResourceCenterFilter === "function") {
-                            window.engagement.setResourceCenterFilter($rc);
+                        if (window.engagement && typeof window.engagement.setResourceCenterFilter === "function") {
+                            window.engagement.setResourceCenterFilter(window.__ampNativeRCFilter);
                         }
                     } catch (e1) {}
                     try {
-                        if ($assistant != null && window.engagement && window.engagement.assistant && typeof window.engagement.assistant.setAssistantFilter === "function") {
-                            window.engagement.assistant.setAssistantFilter($assistant);
+                        if (window.engagement && window.engagement.assistant && typeof window.engagement.assistant.setAssistantFilter === "function") {
+                            window.engagement.assistant.setAssistantFilter(window.__ampNativeAssistantFilter);
                         }
                     } catch (e2) {}
                 })();
@@ -374,18 +417,23 @@ class ResourceCenterWebView(
                   var engagementShell = $engagementShellJs;
                   window.__ampEngagementShell = engagementShell;
                   var engagementInitialPage = $engagementInitialPageJs;
-                  var nativeResourceCenterFilter = $resourceCenterFilterJs;
-                  var nativeAssistantFilter = $assistantFilterJs;
+                  // Initialise the native-filter globals from the latest value the native
+                  // side has cached at WebView construction time. `applyEngagementFilters()`
+                  // (called via `evaluateJavascript` whenever native updates the filter) will
+                  // overwrite these globals, so by the time `applyNativeEngagementFilters()`
+                  // runs after `engagement.boot()` resolves, we always read the latest value.
+                  window.__ampNativeRCFilter = $resourceCenterFilterJs;
+                  window.__ampNativeAssistantFilter = $assistantFilterJs;
 
                   function applyNativeEngagementFilters() {
                       try {
-                          if (nativeResourceCenterFilter != null && window.engagement && typeof window.engagement.setResourceCenterFilter === "function") {
-                              window.engagement.setResourceCenterFilter(nativeResourceCenterFilter);
+                          if (window.engagement && typeof window.engagement.setResourceCenterFilter === "function") {
+                              window.engagement.setResourceCenterFilter(window.__ampNativeRCFilter);
                           }
                       } catch (eRc) {}
                       try {
-                          if (nativeAssistantFilter != null && window.engagement && window.engagement.assistant && typeof window.engagement.assistant.setAssistantFilter === "function") {
-                              window.engagement.assistant.setAssistantFilter(nativeAssistantFilter);
+                          if (window.engagement && window.engagement.assistant && typeof window.engagement.assistant.setAssistantFilter === "function") {
+                              window.engagement.assistant.setAssistantFilter(window.__ampNativeAssistantFilter);
                           }
                       } catch (eAsst) {}
                   }

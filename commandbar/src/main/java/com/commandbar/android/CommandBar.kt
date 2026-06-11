@@ -95,13 +95,17 @@ object CommandBar {
     @JvmStatic
     fun setAssistantFilter(filter: JSONObject?) {
         EngagementFilterStore.setAssistantFilter(filter)
-        currentResourceCenterWebView?.applyEngagementFilters()
+        // Route to the currently attached WebView, which may be either a modal opened
+        // via `openResourceCenter` / `openAssistant` or an inline `ResourceCenterView`
+        // mounted from React Native. `ResourceCenterWebView` self-registers in its
+        // constructor, so this works for both surfaces.
+        ResourceCenterWebView.getActiveInstance()?.applyEngagementFilters()
     }
 
     /** Mirrors `window.engagement.setResourceCenterFilter`. Pass null to clear. */
     @JvmStatic
     fun setResourceCenterFilter(filter: JSONObject?) {
         EngagementFilterStore.setResourceCenterFilter(filter)
-        currentResourceCenterWebView?.applyEngagementFilters()
+        ResourceCenterWebView.getActiveInstance()?.applyEngagementFilters()
     }
 }
