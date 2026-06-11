@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
@@ -70,6 +71,32 @@ class ResourceCenterWebView(
         if (activeInstanceRef?.get() === this) {
             activeInstanceRef = null
         }
+    }
+
+    // When this WebView lives inside a Material BottomSheetDialog, the parent
+    // BottomSheetBehavior intercepts vertical drags before they reach the WebView.
+    // We can't rely on the WebView's native canScrollVertically() to decide who owns
+    // the gesture: the engagement UI (e.g. the Assistant chat history) scrolls inside
+    // an inner `overflow: scroll` web container, so the document itself reports that it
+    // can't scroll and the sheet wrongly steals the drag. Instead, while a touch is in
+    // progress on the WebView we claim the whole gesture so web content (including inner
+    // scrollers) scrolls naturally. The sheet can still be dismissed via the drag handle
+    // strip above the WebView, the dimmed backdrop, the system back button, or the
+    // in-UI close control.
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                requestParentDisallowInterceptTouchEvent(true)
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                requestParentDisallowInterceptTouchEvent(false)
+            }
+        }
+        return super.onTouchEvent(event)
+    }
+
+    private fun requestParentDisallowInterceptTouchEvent(disallow: Boolean) {
+        parent?.requestDisallowInterceptTouchEvent(disallow)
     }
 
     fun setOptions(options: CommandBarOptions) {
