@@ -357,8 +357,6 @@ class ResourceCenterWebView(
                           var iface = window.EngagementAndroidInterface;
                           if (iface && typeof iface.engagement__onFallbackAction === "function") {
                               iface.engagement__onFallbackAction(payload);
-                          } else if (iface && typeof iface.commandbar__onFallbackAction === "function") {
-                              iface.commandbar__onFallbackAction(payload);
                           }
                       } catch (eFallback) {}
                   }
@@ -687,8 +685,26 @@ class ResourceCenterWebView(
           """.trimIndent()
         }
 
+        /**
+         * Builds `<link>` tags that preload the given Google Font families. The WebView has no host
+         * page to load fonts, so a theme using a non-system family only renders if we fetch it here.
+         * Returns an empty string when no families are supplied.
+         */
+        @JvmStatic
+        private fun buildFontPreloadLinks(families: List<String>): String {
+            return families
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .joinToString(separator = "\n                  ") { family ->
+                    // URLEncoder encodes spaces as "+", which is exactly what the Google Fonts API expects.
+                    val encoded = java.net.URLEncoder.encode(family, "UTF-8")
+                    "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=$encoded&display=swap\">"
+                }
+        }
+
         @JvmStatic()
         private  fun getHTML(options: CommandBarOptions): String {
+            val fontLinks = buildFontPreloadLinks(options.fontFamilies)
             return """
             <!DOCTYPE html>
             <html>
@@ -696,6 +712,7 @@ class ResourceCenterWebView(
                   <meta name="viewport" content="user-scalable=no, width=device-width, height=device-height, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
                   <link rel="preconnect" href="https://fonts.googleapis.com">
                   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                  $fontLinks
                   <style>
                       .loading-container {
                           display: flex;

@@ -68,6 +68,14 @@ data class CommandBarOptions(
 
     /** CSS color used by the loading spinner shown while the WebView boots Engagement. */
     var spinnerColor: String = "#3662F1",
+
+    /**
+     * Google Font families to preload in the WebView (e.g. `listOf("Abel")`). The WebView has no
+     * host page, so a theme that uses a non-system font only renders if that font is fetched here
+     * (or auto-detected from the theme at runtime). List any custom theme fonts to guarantee they
+     * load. Defaults to none.
+     */
+    var fontFamilies: List<String> = emptyList(),
 ) {
     /**
      * Flat-form convenience: pass `userId` directly without constructing a [CommandBarUser].
@@ -87,6 +95,7 @@ data class CommandBarOptions(
         mediaUrl: String? = null,
         locale: String? = null,
         spinnerColor: String = "#3662F1",
+        fontFamilies: List<String> = emptyList(),
     ) : this(
         apiKey = apiKey,
         user = userId?.let { CommandBarUser(userId = it) },
@@ -97,6 +106,7 @@ data class CommandBarOptions(
         mediaUrl = mediaUrl,
         locale = locale,
         spinnerColor = spinnerColor,
+        fontFamilies = fontFamilies,
     )
 
     /**
@@ -116,6 +126,7 @@ data class CommandBarOptions(
         mediaUrl = dictionary["mediaUrl"] as? String,
         locale = dictionary["locale"] as? String,
         spinnerColor = (dictionary["spinnerColor"] as? String) ?: "#3662F1",
+        fontFamilies = parseFontFamilies(dictionary),
     )
 
     companion object {
@@ -130,6 +141,18 @@ data class CommandBarOptions(
             }
             val userId = dictionary["userId"] as? String
             return userId?.let { CommandBarUser(userId = it) }
+        }
+
+        /**
+         * Reads the `fontFamilies` array (or singular `fontFamily` string) from the RN bridge
+         * dictionary. Returns an empty list when neither is present.
+         */
+        private fun parseFontFamilies(dictionary: Map<String, Any?>): List<String> {
+            (dictionary["fontFamilies"] as? List<*>)?.let { list ->
+                return list.filterIsInstance<String>()
+            }
+            (dictionary["fontFamily"] as? String)?.let { return listOf(it) }
+            return emptyList()
         }
     }
 }

@@ -22,6 +22,7 @@ The Resource Center / Assistant `WebView` loads the standalone Guides & Surveys 
 - Pass your Amplitude **project API key** as `apiKey` in `CommandBarOptions`.
 - Optional `serverZone`: `ServerZone.US` (default), `ServerZone.EU`, or `ServerZone.LOCAL`.
 - Optional `serverUrl`, `cdnUrl`, `chatUrl`, `mediaUrl`, `locale` to override Amplitude endpoints (forwarded to `engagement.init`).
+- Optional `fontFamilies`: `List<String>` of Google Font families to preload (e.g. `listOf("Abel")`) so custom theme fonts render in the WebView.
 
 ## Installation
 
@@ -102,6 +103,7 @@ Options for `CommandBar.boot(CommandBarOptions(...))`:
 -   `serverZone` (optional): `ServerZone.US` (default), `ServerZone.EU`, or `ServerZone.LOCAL`
 -   `serverUrl`, `cdnUrl`, `chatUrl`, `mediaUrl`, `locale` (optional): forwarded to `engagement.init`
 -   `spinnerColor` (optional): Color used by the loading spinner
+-   `fontFamilies` (optional): `List<String>` of Google Font families to preload (see [Custom theme fonts](#custom-theme-fonts))
 
 ```kotlin
 // Flat shorthand
@@ -116,6 +118,23 @@ CommandBar.boot(
     )
 )
 ```
+
+#### Custom theme fonts
+
+The Resource Center / Assistant render inside a `WebView` that has no host page, so a theme
+that uses a non-system (Google) font only renders correctly if that font is fetched inside the
+WebView. Pass the font family names your Engagement theme uses via `fontFamilies` to ensure they're preloaded
+
+```kotlin
+CommandBar.boot(
+    CommandBarOptions(
+        apiKey = "YOUR_API_KEY",
+        fontFamilies = listOf("Abel"), // any Google Font(s) your theme uses
+    )
+)
+```
+
+If omitted, the WebView still attempts to auto-detect and load the theme's font at runtime.
 
 ### `ResourceCenterWebView`
 
