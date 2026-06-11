@@ -6,14 +6,16 @@ This is a **breaking** release. Every app on 1.x needs the changes below.
 
 ## TL;DR
 
-| Area | 1.x | 2.0 |
-| --- | --- | --- |
-| Identifier | `orgId` (a CommandBar org id) | `apiKey` (your Amplitude project API key) |
-| Configuration | passed to every `openResourceCenter` / `openAssistant` | passed once to `CommandBar.boot(...)` |
-| Open methods | `openResourceCenter(activity, options, articleId?, onFallbackAction?)` | `openResourceCenter(activity, articleId?, onFallbackAction?)` |
-| Open methods | `openAssistant(activity, options, onFallbackAction?)` | `openAssistant(activity, onFallbackAction?)` |
-| `launchCode` | shortcut for staging/local endpoints | removed — use explicit `serverUrl` / `cdnUrl` / `chatUrl` / `mediaUrl` / `locale` / `serverZone` |
-| User shape | `userId` only | `userId` (flat) **or** `user = CommandBarUser(userId, deviceId)` (nested) |
+
+| Area          | 1.x                                                                    | 2.0                                                                                              |
+| ------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Identifier    | `orgId` (a CommandBar org id)                                          | `apiKey` (your Amplitude project API key)                                                        |
+| Configuration | passed to every `openResourceCenter` / `openAssistant`                 | passed once to `CommandBar.boot(...)`                                                            |
+| Open methods  | `openResourceCenter(activity, options, articleId?, onFallbackAction?)` | `openResourceCenter(activity, articleId?, onFallbackAction?)`                                    |
+| Open methods  | `openAssistant(activity, options, onFallbackAction?)`                  | `openAssistant(activity, onFallbackAction?)`                                                     |
+| `launchCode`  | shortcut for staging/local endpoints                                   | removed — use explicit `serverUrl` / `cdnUrl` / `chatUrl` / `mediaUrl` / `locale` / `serverZone` |
+| User shape    | `userId` only                                                          | `userId` (flat) **or** `user = CommandBarUser(userId, deviceId)` (nested)                        |
+
 
 ## 1. Boot once, instead of passing options on every call
 
@@ -36,11 +38,11 @@ The biggest API change: `CommandBar.boot(options)` stores the configuration. Sub
 + CommandBar.openAssistant(activity)
 ```
 
-Calls to `openResourceCenter` / `openAssistant` before `boot` are a no-op and log a warning. Call `boot` as early as possible.
+Calls to `openResourceCenter` / `openAssistant` before `boot` are a no-op and log a warning. Call `boot` as early as possible or as soon as you have a user ID.
 
 ## 2. Replace `orgId` with an Amplitude `apiKey`
 
-CommandBar is now Amplitude Guides & Surveys. Get your project **API key** from the Amplitude dashboard and use it wherever you previously passed an org id.
+CommandBar is now Amplitude! Get your project **API key** from the Amplitude dashboard and use it wherever you previously passed an org id.
 
 ```diff
 - CommandBarOptions(orgId = "YOUR_ORG_ID")
@@ -61,11 +63,6 @@ CommandBar.boot(CommandBarOptions(
     user = CommandBarUser(userId = "user-123", deviceId = "device-abc"),
 ))
 ```
-
-## 4. Replace `launchCode` with explicit URLs / `serverZone`
-
-`launchCode` is gone. To target staging, EU, or a local server, set the corresponding fields directly — these map 1:1 to the web Engagement SDK's `SDKConfig`.
-
 ```diff
 - CommandBarOptions(orgId = "YOUR_ORG_ID", launchCode = "staging")
 + CommandBarOptions(
@@ -78,17 +75,3 @@ CommandBar.boot(CommandBarOptions(
 +     locale    = "en-US",
 + )
 ```
-
-## 5. (Optional) Re-call `boot` after sign-in
-
-`CommandBar.boot(...)` is safe to call again at any time. A common pattern is to boot anonymously at app launch and re-boot once the user authenticates:
-
-```kotlin
-CommandBar.boot(CommandBarOptions(apiKey = apiKey))
-// ...later, after sign-in...
-CommandBar.boot(CommandBarOptions(apiKey = apiKey, userId = signedInUserId))
-```
-
-## Reference
-
-After migrating, the [README](./README.md) is the source of truth for the 2.0 API.
