@@ -70,7 +70,7 @@ data class CommandBarOptions(
     var spinnerColor: String = "#3662F1",
 
     /**
-     * Google Font families to preload in the WebView (e.g. `listOf("Abel")`). The WebView has no
+     * Google Font families to preload in the WebView (e.g. `listOf("Roboto")`). The WebView has no
      * host page, so a theme that uses a non-system font only renders if that font is fetched here
      * (or auto-detected from the theme at runtime). List any custom theme fonts to guarantee they
      * load. Defaults to none.

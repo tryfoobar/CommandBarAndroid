@@ -22,7 +22,7 @@ The Resource Center / Assistant `WebView` loads the standalone Guides & Surveys 
 - Pass your Amplitude **project API key** as `apiKey` in `CommandBarOptions`.
 - Optional `serverZone`: `ServerZone.US` (default), `ServerZone.EU`, or `ServerZone.LOCAL`.
 - Optional `serverUrl`, `cdnUrl`, `chatUrl`, `mediaUrl`, `locale` to override Amplitude endpoints (forwarded to `engagement.init`).
-- Optional `fontFamilies`: `List<String>` of Google Font families to preload (e.g. `listOf("Abel")`) so custom theme fonts render in the WebView.
+- Optional `fontFamilies`: `List<String>` of Google Font families to preload (e.g. `listOf("Roboto")`) so custom theme fonts render in the WebView.
 
 ## Installation
 
@@ -129,7 +129,7 @@ WebView. Pass the font family names your Engagement theme uses via `fontFamilies
 CommandBar.boot(
     CommandBarOptions(
         apiKey = "YOUR_API_KEY",
-        fontFamilies = listOf("Abel"), // any Google Font(s) your theme uses
+        fontFamilies = listOf("Roboto"), // any Google Font(s) your theme uses
     )
 )
 ```
